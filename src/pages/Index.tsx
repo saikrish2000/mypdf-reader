@@ -1,11 +1,82 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import React, { useState, useEffect, useCallback } from 'react';
+import PDFUpload from '@/components/PDFUpload';
+import PDFViewer from '@/components/PDFViewer';
+import RecentFiles from '@/components/RecentFiles';
+import { usePDFStorage } from '@/hooks/usePDFStorage';
+import { BookOpen } from 'lucide-react';
 
 const Index = () => {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const { getRecentFiles } = usePDFStorage();
+  const [recentFiles, setRecentFiles] = useState<ReturnType<typeof getRecentFiles>>([]);
+
+  useEffect(() => {
+    setRecentFiles(getRecentFiles());
+  }, [getRecentFiles]);
+
+  const handleFileSelect = useCallback((file: File) => {
+    setIsLoading(true);
+    // Small delay to show loading state
+    setTimeout(() => {
+      setSelectedFile(file);
+      setIsLoading(false);
+    }, 500);
+  }, []);
+
+  const handleClose = useCallback(() => {
+    setSelectedFile(null);
+    setRecentFiles(getRecentFiles());
+  }, [getRecentFiles]);
+
+  const handleRecentSelect = useCallback((fileName: string) => {
+    // When a recent file is selected, we can't auto-load it
+    // The user needs to upload the file again, but progress will be restored
+    // This is a limitation of browser security (no file system access)
+  }, []);
+
+  if (selectedFile) {
+    return <PDFViewer file={selectedFile} onClose={handleClose} />;
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
+    <div className="min-h-screen bg-background">
+      <div className="container max-w-4xl mx-auto px-4 py-12 sm:py-20">
+        {/* Header */}
+        <div className="text-center mb-12 animate-fade-in">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-accent/10 mb-6">
+            <BookOpen className="w-8 h-8 text-accent" />
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-3">
+            PDF Reader
+          </h1>
+          <p className="text-lg text-muted-foreground max-w-md mx-auto">
+            Read PDFs in your browser with automatic progress saving. 
+            Pick up right where you left off.
+          </p>
+        </div>
+        
+        {/* Upload area */}
+        <PDFUpload 
+          onFileSelect={handleFileSelect} 
+          isLoading={isLoading}
+        />
+        
+        {/* Recent files */}
+        <RecentFiles 
+          files={recentFiles}
+          onSelect={handleRecentSelect}
+        />
+        
+        {/* Footer */}
+        <div className="text-center mt-16 text-sm text-muted-foreground">
+          <p>
+            Your reading progress is saved locally in your browser.
+          </p>
+          <p className="mt-1">
+            Use arrow keys or spacebar to navigate between pages.
+          </p>
+        </div>
       </div>
     </div>
   );
