@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
 import PDFToolbar from './PDFToolbar';
 import ThumbnailSidebar from './ThumbnailSidebar';
+import BookmarkPanel from './BookmarkPanel';
 import { usePDFStorage } from '@/hooks/usePDFStorage';
 import { cn } from '@/lib/utils';
 
@@ -25,9 +26,14 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
   const [isRendering, setIsRendering] = useState(false);
   const [flipDirection, setFlipDirection] = useState<'left' | 'right' | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [bookmarksOpen, setBookmarksOpen] = useState(false);
+  const [bookmarkVersion, setBookmarkVersion] = useState(0);
   const renderTaskRef = useRef<pdfjsLib.RenderTask | null>(null);
 
-  const { saveProgress, loadProgress } = usePDFStorage();
+  const { saveProgress, loadProgress, getBookmarks, addBookmark, removeBookmark, isBookmarked } = usePDFStorage();
+
+  const bookmarks = getBookmarks(file.name);
+  const currentPageBookmarked = isBookmarked(file.name, currentPage);
 
   // Load PDF document
   useEffect(() => {
@@ -46,40 +52,23 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
         console.error('Error loading PDF:', error);
       }
     };
-
     loadPDF();
   }, [file, loadProgress]);
 
-  // Render current page
   const renderPage = useCallback(async (pageNum: number) => {
     if (!pdfDoc || !canvasRef.current || isRendering) return;
-
-    if (renderTaskRef.current) {
-      renderTaskRef.current.cancel();
-    }
-
+    if (renderTaskRef.current) renderTaskRef.current.cancel();
     setIsRendering(true);
-
     try {
       const page = await pdfDoc.getPage(pageNum);
       const canvas = canvasRef.current;
       const context = canvas.getContext('2d');
-
       if (!context) return;
-
       const viewport = page.getViewport({ scale });
-
       canvas.height = viewport.height;
       canvas.width = viewport.width;
-
-      const renderContext = {
-        canvasContext: context,
-        viewport: viewport,
-      };
-
-      renderTaskRef.current = page.render(renderContext);
+      renderTaskRef.current = page.render({ canvasContext: context, viewport });
       await renderTaskRef.current.promise;
-
       saveProgress(file.name, pageNum, totalPages);
     } catch (error) {
       if ((error as Error).name !== 'RenderingCancelledException') {
@@ -91,12 +80,9 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
   }, [pdfDoc, scale, file.name, totalPages, saveProgress, isRendering]);
 
   useEffect(() => {
-    if (pdfDoc) {
-      renderPage(currentPage);
-    }
+    if (pdfDoc) renderPage(currentPage);
   }, [currentPage, scale, pdfDoc, renderPage]);
 
-  // Handle page change with flip animation
   const handlePageChange = useCallback((page: number) => {
     if (page >= 1 && page <= totalPages && page !== currentPage) {
       setFlipDirection(page > currentPage ? 'left' : 'right');
@@ -106,6 +92,16 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
       }, 50);
     }
   }, [totalPages, currentPage]);
+
+  const handleAddBookmark = useCallback((label: string) => {
+    addBookmark(file.name, currentPage, label);
+    setBookmarkVersion(v => v + 1);
+  }, [addBookmark, file.name, currentPage]);
+
+  const handleRemoveBookmark = useCallback((page: number) => {
+    removeBookmark(file.name, page);
+    setBookmarkVersion(v => v + 1);
+  }, [removeBookmark, file.name]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -118,12 +114,18 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
         handlePageChange(currentPage + 1);
       } else if (e.key === 'Escape') {
         onClose();
+      } else if (e.key === 'b' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        if (!currentPageBookmarked) {
+          handleAddBookmark(`Page ${currentPage}`);
+        } else {
+          handleRemoveBookmark(currentPage);
+        }
       }
     };
-
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentPage, handlePageChange, onClose]);
+  }, [currentPage, handlePageChange, onClose, currentPageBookmarked, handleAddBookmark, handleRemoveBookmark]);
 
   return (
     <div className="flex flex-col h-screen bg-muted animate-fade-in">
@@ -138,6 +140,9 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
         onToggleTheme={onToggleTheme}
         onToggleSidebar={() => setSidebarOpen(prev => !prev)}
         sidebarOpen={sidebarOpen}
+        onToggleBookmarks={() => setBookmarksOpen(prev => !prev)}
+        bookmarksOpen={bookmarksOpen}
+        isCurrentPageBookmarked={currentPageBookmarked}
       />
 
       <ThumbnailSidebar
@@ -149,11 +154,23 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
         onToggle={() => setSidebarOpen(prev => !prev)}
       />
 
+      <BookmarkPanel
+        bookmarks={bookmarks}
+        currentPage={currentPage}
+        isCurrentPageBookmarked={currentPageBookmarked}
+        onAddBookmark={handleAddBookmark}
+        onRemoveBookmark={handleRemoveBookmark}
+        onGoToBookmark={handlePageChange}
+        isOpen={bookmarksOpen}
+        onClose={() => setBookmarksOpen(false)}
+      />
+
       <div
         ref={containerRef}
         className={cn(
           "flex-1 overflow-auto p-4 sm:p-8 flex justify-center transition-all duration-300",
-          sidebarOpen && "sm:pl-52"
+          sidebarOpen && "sm:pl-52",
+          bookmarksOpen && "sm:pr-72"
         )}
       >
         <div className="inline-block animate-scale-in" style={{ perspective: '1200px' }}>
@@ -163,10 +180,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
             flipDirection === 'left' && "animate-flip-left",
             flipDirection === 'right' && "animate-flip-right",
           )}>
-            <canvas
-              ref={canvasRef}
-              className="block max-w-full h-auto"
-            />
+            <canvas ref={canvasRef} className="block max-w-full h-auto" />
           </div>
         </div>
       </div>
