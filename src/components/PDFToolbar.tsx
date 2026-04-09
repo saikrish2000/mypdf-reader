@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, PanelLeft, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, PanelLeft, X, Bookmark } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import { cn } from '@/lib/utils';
 
@@ -14,6 +14,9 @@ interface PDFToolbarProps {
   onToggleTheme: () => void;
   onToggleSidebar: () => void;
   sidebarOpen: boolean;
+  onToggleBookmarks: () => void;
+  bookmarksOpen: boolean;
+  isCurrentPageBookmarked: boolean;
 }
 
 const PDFToolbar: React.FC<PDFToolbarProps> = ({
@@ -27,6 +30,9 @@ const PDFToolbar: React.FC<PDFToolbarProps> = ({
   onToggleTheme,
   onToggleSidebar,
   sidebarOpen,
+  onToggleBookmarks,
+  bookmarksOpen,
+  isCurrentPageBookmarked,
 }) => {
   const handlePageInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value, 10);
