@@ -158,6 +158,41 @@
   .progress-fill {
     @apply bg-progress;
   }
+
+  /* Book-inspired bookmark panel */
+  .bookmark-panel {
+    background:
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 28px,
+        hsl(var(--border) / 0.3) 28px,
+        hsl(var(--border) / 0.3) 29px
+      ),
+      linear-gradient(
+        135deg,
+        hsl(var(--card)) 0%,
+        hsl(var(--background)) 100%
+      );
+    border-left: 1px solid hsl(var(--border));
+    box-shadow:
+      -4px 0 16px -4px hsl(var(--foreground) / 0.08),
+      inset 4px 0 8px -4px hsl(var(--foreground) / 0.03);
+  }
+
+  .bookmark-panel-header {
+    background:
+      linear-gradient(
+        180deg,
+        hsl(var(--secondary) / 0.8) 0%,
+        hsl(var(--card) / 0.4) 100%
+      );
+    border-bottom: 2px solid hsl(var(--border));
+  }
+
+  .bookmark-panel-add {
+    background: hsl(var(--card) / 0.6);
+  }
 }
 
 @layer utilities {
