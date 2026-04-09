@@ -1,5 +1,6 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, PanelLeft, X } from 'lucide-react';
+import ThemeToggle from './ThemeToggle';
 import { cn } from '@/lib/utils';
 
 interface PDFToolbarProps {
@@ -9,6 +10,10 @@ interface PDFToolbarProps {
   scale: number;
   onPageChange: (page: number) => void;
   onScaleChange: (scale: number) => void;
+  theme: 'light' | 'dark';
+  onToggleTheme: () => void;
+  onToggleSidebar: () => void;
+  sidebarOpen: boolean;
 }
 
 const PDFToolbar: React.FC<PDFToolbarProps> = ({
@@ -18,6 +23,10 @@ const PDFToolbar: React.FC<PDFToolbarProps> = ({
   scale,
   onPageChange,
   onScaleChange,
+  theme,
+  onToggleTheme,
+  onToggleSidebar,
+  sidebarOpen,
 }) => {
   const handlePageInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value, 10);
@@ -35,27 +44,40 @@ const PDFToolbar: React.FC<PDFToolbarProps> = ({
   const progress = totalPages > 0 ? (currentPage / totalPages) * 100 : 0;
 
   return (
-    <div className="pdf-toolbar sticky top-0 z-10">
+    <div className="pdf-toolbar sticky top-0 z-30">
       {/* Progress bar */}
       <div className="h-1 bg-toolbar-muted/30">
-        <div 
+        <div
           className="h-full bg-accent transition-all duration-300 ease-out"
           style={{ width: `${progress}%` }}
         />
       </div>
-      
+
       <div className="flex items-center justify-between px-4 py-3 sm:px-6">
-        {/* File name */}
-        <div className="flex-1 min-w-0 mr-4">
-          <h2 className="text-sm font-medium text-toolbar-foreground truncate">
-            {fileName}
-          </h2>
-          <p className="text-xs text-toolbar-muted">
-            {Math.round(progress)}% complete
-          </p>
+        {/* Left: sidebar toggle + file info */}
+        <div className="flex items-center gap-2 flex-1 min-w-0 mr-4">
+          <button
+            onClick={onToggleSidebar}
+            className={cn(
+              "hidden sm:flex p-2 rounded-lg transition-colors",
+              "hover:bg-toolbar-foreground/10",
+              sidebarOpen && "bg-toolbar-foreground/10"
+            )}
+            title={sidebarOpen ? 'Hide thumbnails' : 'Show thumbnails'}
+          >
+            <PanelLeft className="w-4 h-4 text-toolbar-foreground" />
+          </button>
+          <div className="min-w-0">
+            <h2 className="text-sm font-medium text-toolbar-foreground truncate">
+              {fileName}
+            </h2>
+            <p className="text-xs text-toolbar-muted">
+              {Math.round(progress)}% complete
+            </p>
+          </div>
         </div>
-        
-        {/* Navigation controls */}
+
+        {/* Center: navigation controls */}
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Zoom controls */}
           <div className="hidden sm:flex items-center gap-1 mr-2">
@@ -85,7 +107,7 @@ const PDFToolbar: React.FC<PDFToolbarProps> = ({
               <ZoomIn className="w-4 h-4 text-toolbar-foreground" />
             </button>
           </div>
-          
+
           {/* Page navigation */}
           <button
             onClick={() => onPageChange(currentPage - 1)}
@@ -98,7 +120,7 @@ const PDFToolbar: React.FC<PDFToolbarProps> = ({
           >
             <ChevronLeft className="w-5 h-5 text-toolbar-foreground" />
           </button>
-          
+
           <div className="flex items-center gap-2">
             <input
               type="number"
@@ -118,7 +140,7 @@ const PDFToolbar: React.FC<PDFToolbarProps> = ({
               of {totalPages}
             </span>
           </div>
-          
+
           <button
             onClick={() => onPageChange(currentPage + 1)}
             disabled={currentPage >= totalPages}
@@ -129,6 +151,18 @@ const PDFToolbar: React.FC<PDFToolbarProps> = ({
             title="Next page"
           >
             <ChevronRight className="w-5 h-5 text-toolbar-foreground" />
+          </button>
+        </div>
+
+        {/* Right: theme toggle + close */}
+        <div className="flex items-center gap-1 ml-4">
+          <ThemeToggle theme={theme} onToggle={onToggleTheme} variant="toolbar" />
+          <button
+            onClick={() => window.history.back()}
+            className="p-2 rounded-lg hover:bg-toolbar-foreground/10 transition-colors"
+            title="Close"
+          >
+            <X className="w-4 h-4 text-toolbar-foreground" />
           </button>
         </div>
       </div>

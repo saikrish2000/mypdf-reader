@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
 import PDFToolbar from './PDFToolbar';
+import ThumbnailSidebar from './ThumbnailSidebar';
 import { usePDFStorage } from '@/hooks/usePDFStorage';
 import { cn } from '@/lib/utils';
 
@@ -10,9 +11,11 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.j
 interface PDFViewerProps {
   file: File;
   onClose: () => void;
+  theme: 'light' | 'dark';
+  onToggleTheme: () => void;
 }
 
-const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose }) => {
+const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleTheme }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [pdfDoc, setPdfDoc] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
@@ -20,8 +23,10 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose }) => {
   const [totalPages, setTotalPages] = useState(0);
   const [scale, setScale] = useState(1.5);
   const [isRendering, setIsRendering] = useState(false);
+  const [flipDirection, setFlipDirection] = useState<'left' | 'right' | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const renderTaskRef = useRef<pdfjsLib.RenderTask | null>(null);
-  
+
   const { saveProgress, loadProgress } = usePDFStorage();
 
   // Load PDF document
@@ -32,8 +37,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose }) => {
         const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
         setPdfDoc(pdf);
         setTotalPages(pdf.numPages);
-        
-        // Check for saved progress
+
         const saved = loadProgress(file.name);
         if (saved && saved.currentPage <= pdf.numPages) {
           setCurrentPage(saved.currentPage);
@@ -50,7 +54,6 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose }) => {
   const renderPage = useCallback(async (pageNum: number) => {
     if (!pdfDoc || !canvasRef.current || isRendering) return;
 
-    // Cancel any ongoing render
     if (renderTaskRef.current) {
       renderTaskRef.current.cancel();
     }
@@ -61,12 +64,11 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose }) => {
       const page = await pdfDoc.getPage(pageNum);
       const canvas = canvasRef.current;
       const context = canvas.getContext('2d');
-      
+
       if (!context) return;
 
       const viewport = page.getViewport({ scale });
-      
-      // Set canvas dimensions
+
       canvas.height = viewport.height;
       canvas.width = viewport.width;
 
@@ -77,8 +79,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose }) => {
 
       renderTaskRef.current = page.render(renderContext);
       await renderTaskRef.current.promise;
-      
-      // Save progress
+
       saveProgress(file.name, pageNum, totalPages);
     } catch (error) {
       if ((error as Error).name !== 'RenderingCancelledException') {
@@ -89,19 +90,22 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose }) => {
     }
   }, [pdfDoc, scale, file.name, totalPages, saveProgress, isRendering]);
 
-  // Render when page or scale changes
   useEffect(() => {
     if (pdfDoc) {
       renderPage(currentPage);
     }
   }, [currentPage, scale, pdfDoc, renderPage]);
 
-  // Handle page change
+  // Handle page change with flip animation
   const handlePageChange = useCallback((page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
+    if (page >= 1 && page <= totalPages && page !== currentPage) {
+      setFlipDirection(page > currentPage ? 'left' : 'right');
+      setTimeout(() => {
+        setCurrentPage(page);
+        setTimeout(() => setFlipDirection(null), 350);
+      }, 50);
     }
-  }, [totalPages]);
+  }, [totalPages, currentPage]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -130,25 +134,43 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose }) => {
         scale={scale}
         onPageChange={handlePageChange}
         onScaleChange={setScale}
+        theme={theme}
+        onToggleTheme={onToggleTheme}
+        onToggleSidebar={() => setSidebarOpen(prev => !prev)}
+        sidebarOpen={sidebarOpen}
       />
-      
-      <div 
+
+      <ThumbnailSidebar
+        pdfDoc={pdfDoc}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageSelect={handlePageChange}
+        isOpen={sidebarOpen}
+        onToggle={() => setSidebarOpen(prev => !prev)}
+      />
+
+      <div
         ref={containerRef}
-        className="flex-1 overflow-auto p-4 sm:p-8 flex justify-center"
+        className={cn(
+          "flex-1 overflow-auto p-4 sm:p-8 flex justify-center transition-all duration-300",
+          sidebarOpen && "sm:pl-52"
+        )}
       >
-        <div className="inline-block animate-scale-in">
+        <div className="inline-block animate-scale-in" style={{ perspective: '1200px' }}>
           <div className={cn(
-            "pdf-paper rounded-lg overflow-hidden transition-shadow duration-300",
-            isRendering && "opacity-80"
+            "pdf-paper rounded-lg overflow-hidden transition-all duration-300",
+            isRendering && "opacity-80",
+            flipDirection === 'left' && "animate-flip-left",
+            flipDirection === 'right' && "animate-flip-right",
           )}>
-            <canvas 
+            <canvas
               ref={canvasRef}
               className="block max-w-full h-auto"
             />
           </div>
         </div>
       </div>
-      
+
       {/* Mobile navigation overlay */}
       <div className="fixed bottom-4 left-4 right-4 sm:hidden">
         <div className="flex justify-center gap-4">
