@@ -2,7 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import PDFUpload from '@/components/PDFUpload';
 import PDFViewer from '@/components/PDFViewer';
 import RecentFiles from '@/components/RecentFiles';
+import ThemeToggle from '@/components/ThemeToggle';
 import { usePDFStorage } from '@/hooks/usePDFStorage';
+import { useTheme } from '@/hooks/useTheme';
 import { BookOpen } from 'lucide-react';
 
 const Index = () => {
@@ -10,6 +12,7 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { getRecentFiles } = usePDFStorage();
   const [recentFiles, setRecentFiles] = useState<ReturnType<typeof getRecentFiles>>([]);
+  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     setRecentFiles(getRecentFiles());
@@ -17,7 +20,6 @@ const Index = () => {
 
   const handleFileSelect = useCallback((file: File) => {
     setIsLoading(true);
-    // Small delay to show loading state
     setTimeout(() => {
       setSelectedFile(file);
       setIsLoading(false);
@@ -30,17 +32,27 @@ const Index = () => {
   }, [getRecentFiles]);
 
   const handleRecentSelect = useCallback((fileName: string) => {
-    // When a recent file is selected, we can't auto-load it
-    // The user needs to upload the file again, but progress will be restored
-    // This is a limitation of browser security (no file system access)
+    // User needs to re-upload the file; progress will be restored automatically
   }, []);
 
   if (selectedFile) {
-    return <PDFViewer file={selectedFile} onClose={handleClose} />;
+    return (
+      <PDFViewer
+        file={selectedFile}
+        onClose={handleClose}
+        theme={theme}
+        onToggleTheme={toggleTheme}
+      />
+    );
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background transition-colors duration-300">
+      {/* Theme toggle - top right */}
+      <div className="fixed top-4 right-4 z-10">
+        <ThemeToggle theme={theme} onToggle={toggleTheme} />
+      </div>
+
       <div className="container max-w-4xl mx-auto px-4 py-12 sm:py-20">
         {/* Header */}
         <div className="text-center mb-12 animate-fade-in">
@@ -51,31 +63,27 @@ const Index = () => {
             PDF Reader
           </h1>
           <p className="text-lg text-muted-foreground max-w-md mx-auto">
-            Read PDFs in your browser with automatic progress saving. 
+            Read PDFs in your browser with automatic progress saving.
             Pick up right where you left off.
           </p>
         </div>
-        
+
         {/* Upload area */}
-        <PDFUpload 
-          onFileSelect={handleFileSelect} 
+        <PDFUpload
+          onFileSelect={handleFileSelect}
           isLoading={isLoading}
         />
-        
+
         {/* Recent files */}
-        <RecentFiles 
+        <RecentFiles
           files={recentFiles}
           onSelect={handleRecentSelect}
         />
-        
+
         {/* Footer */}
         <div className="text-center mt-16 text-sm text-muted-foreground">
-          <p>
-            Your reading progress is saved locally in your browser.
-          </p>
-          <p className="mt-1">
-            Use arrow keys or spacebar to navigate between pages.
-          </p>
+          <p>Your reading progress is saved locally in your browser.</p>
+          <p className="mt-1">Use arrow keys or spacebar to navigate between pages.</p>
         </div>
       </div>
     </div>
