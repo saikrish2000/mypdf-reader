@@ -160,8 +160,22 @@ const PDFToolbar: React.FC<PDFToolbarProps> = ({
           </button>
         </div>
 
-        {/* Right: theme toggle + close */}
+        {/* Right: bookmarks + theme toggle + close */}
         <div className="flex items-center gap-1 ml-4">
+          <button
+            onClick={onToggleBookmarks}
+            className={cn(
+              "p-2 rounded-lg transition-colors",
+              "hover:bg-toolbar-foreground/10",
+              bookmarksOpen && "bg-toolbar-foreground/10"
+            )}
+            title="Bookmarks"
+          >
+            <Bookmark className={cn(
+              "w-4 h-4 text-toolbar-foreground",
+              isCurrentPageBookmarked && "fill-accent text-accent"
+            )} />
+          </button>
           <ThemeToggle theme={theme} onToggle={onToggleTheme} variant="toolbar" />
           <button
             onClick={() => window.history.back()}
