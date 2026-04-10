@@ -56,9 +56,9 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
   }, [file, loadProgress]);
 
   const renderPage = useCallback(async (pageNum: number) => {
-    if (!pdfDoc || !canvasRef.current || isRendering) return;
+    if (!pdfDoc || !canvasRef.current || isRenderingRef.current) return;
     if (renderTaskRef.current) renderTaskRef.current.cancel();
-    setIsRendering(true);
+    isRenderingRef.current = true;
     try {
       const page = await pdfDoc.getPage(pageNum);
       const canvas = canvasRef.current;
@@ -75,9 +75,9 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
         console.error('Error rendering page:', error);
       }
     } finally {
-      setIsRendering(false);
+      isRenderingRef.current = false;
     }
-  }, [pdfDoc, scale, file.name, totalPages, saveProgress, isRendering]);
+  }, [pdfDoc, scale, file.name, totalPages, saveProgress]);
 
   useEffect(() => {
     if (pdfDoc) renderPage(currentPage);
