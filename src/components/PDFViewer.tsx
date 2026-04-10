@@ -176,7 +176,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
         <div className="inline-block animate-scale-in" style={{ perspective: '1200px' }}>
           <div className={cn(
             "pdf-paper rounded-lg overflow-hidden transition-all duration-300",
-            isRendering && "opacity-80",
+            false && "opacity-80",
             flipDirection === 'left' && "animate-flip-left",
             flipDirection === 'right' && "animate-flip-right",
           )}>
