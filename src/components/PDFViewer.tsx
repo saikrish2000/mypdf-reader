@@ -23,7 +23,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [scale, setScale] = useState(1.5);
-  const [isRendering, setIsRendering] = useState(false);
+  const isRenderingRef = useRef(false);
   const [flipDirection, setFlipDirection] = useState<'left' | 'right' | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [bookmarksOpen, setBookmarksOpen] = useState(false);
@@ -56,9 +56,9 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
   }, [file, loadProgress]);
 
   const renderPage = useCallback(async (pageNum: number) => {
-    if (!pdfDoc || !canvasRef.current || isRendering) return;
+    if (!pdfDoc || !canvasRef.current || isRenderingRef.current) return;
     if (renderTaskRef.current) renderTaskRef.current.cancel();
-    setIsRendering(true);
+    isRenderingRef.current = true;
     try {
       const page = await pdfDoc.getPage(pageNum);
       const canvas = canvasRef.current;
@@ -75,9 +75,9 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
         console.error('Error rendering page:', error);
       }
     } finally {
-      setIsRendering(false);
+      isRenderingRef.current = false;
     }
-  }, [pdfDoc, scale, file.name, totalPages, saveProgress, isRendering]);
+  }, [pdfDoc, scale, file.name, totalPages, saveProgress]);
 
   useEffect(() => {
     if (pdfDoc) renderPage(currentPage);
@@ -176,7 +176,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
         <div className="inline-block animate-scale-in" style={{ perspective: '1200px' }}>
           <div className={cn(
             "pdf-paper rounded-lg overflow-hidden transition-all duration-300",
-            isRendering && "opacity-80",
+            false && "opacity-80",
             flipDirection === 'left' && "animate-flip-left",
             flipDirection === 'right' && "animate-flip-right",
           )}>
