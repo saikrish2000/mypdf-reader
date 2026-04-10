@@ -7,7 +7,7 @@ import { usePDFStorage } from '@/hooks/usePDFStorage';
 import { cn } from '@/lib/utils';
 
 // Set worker source
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
 
 interface PDFViewerProps {
   file: File;
