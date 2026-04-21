@@ -1,6 +1,8 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, PanelLeft, X, Bookmark, Volume2, VolumeX } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, PanelLeft, X, Bookmark } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
+import ReadAloudControls from './ReadAloudControls';
+import type { SpeechSettings } from '@/hooks/useSpeech';
 import { cn } from '@/lib/utils';
 
 interface PDFToolbarProps {
@@ -19,6 +21,11 @@ interface PDFToolbarProps {
   isCurrentPageBookmarked: boolean;
   isReading: boolean;
   onToggleRead: () => void;
+  voices: SpeechSynthesisVoice[];
+  speechSettings: SpeechSettings;
+  onSpeechSettingsChange: (next: Partial<SpeechSettings>) => void;
+  continuousRead: boolean;
+  onContinuousChange: (value: boolean) => void;
 }
 
 const PDFToolbar: React.FC<PDFToolbarProps> = ({
@@ -37,6 +44,11 @@ const PDFToolbar: React.FC<PDFToolbarProps> = ({
   isCurrentPageBookmarked,
   isReading,
   onToggleRead,
+  voices,
+  speechSettings,
+  onSpeechSettingsChange,
+  continuousRead,
+  onContinuousChange,
 }) => {
   const handlePageInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value, 10);
@@ -166,21 +178,15 @@ const PDFToolbar: React.FC<PDFToolbarProps> = ({
 
         {/* Right: bookmarks + theme toggle + close */}
         <div className="flex items-center gap-1 ml-4">
-          <button
-            onClick={onToggleRead}
-            className={cn(
-              "p-2 rounded-lg transition-colors",
-              "hover:bg-toolbar-foreground/10",
-              isReading && "bg-accent/20"
-            )}
-            title={isReading ? 'Stop reading' : 'Read page aloud'}
-          >
-            {isReading ? (
-              <VolumeX className="w-4 h-4 text-accent" />
-            ) : (
-              <Volume2 className="w-4 h-4 text-toolbar-foreground" />
-            )}
-          </button>
+          <ReadAloudControls
+            isReading={isReading}
+            onToggleRead={onToggleRead}
+            voices={voices}
+            settings={speechSettings}
+            onSettingsChange={onSpeechSettingsChange}
+            continuous={continuousRead}
+            onContinuousChange={onContinuousChange}
+          />
           <button
             onClick={onToggleBookmarks}
             className={cn(
