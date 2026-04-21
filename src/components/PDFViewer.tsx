@@ -206,7 +206,12 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
       });
       if (error) throw error;
       if ((data as any)?.error) {
-        setSummaryError((data as any).error);
+        const errorMsg = (data as any).error;
+        if (errorMsg.includes('LOVABLE_API_KEY')) {
+          setSummaryError('AI summarization requires configuration. Please contact support or configure the API key in your Supabase project.');
+        } else {
+          setSummaryError(errorMsg);
+        }
         return;
       }
       setSummary((data as any)?.summary ?? '');

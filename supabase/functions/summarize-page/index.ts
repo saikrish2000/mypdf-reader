@@ -26,7 +26,15 @@ serve(async (req) => {
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+      return new Response(
+        JSON.stringify({ 
+          error: "AI summarization is not configured. Please set the LOVABLE_API_KEY environment variable in your Supabase project settings." 
+        }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
     // Trim very long pages to keep latency/cost reasonable
