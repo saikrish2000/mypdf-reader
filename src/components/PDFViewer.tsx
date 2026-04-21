@@ -6,7 +6,6 @@ import BookmarkPanel from './BookmarkPanel';
 import { usePDFStorage } from '@/hooks/usePDFStorage';
 import { cachePDF } from '@/lib/pdfCache';
 import { cn } from '@/lib/utils';
-import { Volume2, VolumeX } from 'lucide-react';
 import { toast } from 'sonner';
 
 // Set worker source
