@@ -3,11 +3,14 @@ import * as pdfjsLib from 'pdfjs-dist';
 import PDFToolbar from './PDFToolbar';
 import ThumbnailSidebar from './ThumbnailSidebar';
 import BookmarkPanel from './BookmarkPanel';
+import SummaryPanel from './SummaryPanel';
+import PlaybackControls from './PlaybackControls';
 import { usePDFStorage } from '@/hooks/usePDFStorage';
 import { useSpeech } from '@/hooks/useSpeech';
 import { cachePDF } from '@/lib/pdfCache';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 // Set worker source
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
@@ -37,7 +40,26 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
   const renderTaskRef = useRef<pdfjsLib.RenderTask | null>(null);
 
   const { saveProgress, loadProgress, getBookmarks, addBookmark, removeBookmark, isBookmarked } = usePDFStorage();
-  const { voices, settings: speechSettings, setSettings: setSpeechSettings, speak, stop: stopSpeak, isSpeaking } = useSpeech();
+  const {
+    voices,
+    settings: speechSettings,
+    setSettings: setSpeechSettings,
+    speak,
+    stop: stopSpeak,
+    pause: pauseSpeak,
+    resume: resumeSpeak,
+    skipForward,
+    skipBackward,
+    isSpeaking,
+    isPaused,
+  } = useSpeech();
+
+  // AI summary state
+  const [summaryOpen, setSummaryOpen] = useState(false);
+  const [summary, setSummary] = useState<string | null>(null);
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
+  const [summaryPage, setSummaryPage] = useState<number>(1);
 
   useEffect(() => { continuousRef.current = continuousRead; }, [continuousRead]);
   useEffect(() => { totalPagesRef.current = totalPages; }, [totalPages]);
