@@ -115,56 +115,63 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
     setBookmarkVersion(v => v + 1);
   }, [removeBookmark, file.name]);
 
-  // Read aloud current page using browser SpeechSynthesis (free, offline)
-  const stopReading = useCallback(() => {
-    window.speechSynthesis.cancel();
-    setIsReading(false);
-  }, []);
+  // Extract plain text from a given page
+  const extractPageText = useCallback(async (pageNum: number): Promise<string> => {
+    if (!pdfDoc) return '';
+    const page = await pdfDoc.getPage(pageNum);
+    const textContent = await page.getTextContent();
+    return textContent.items
+      .map((item: any) => ('str' in item ? item.str : ''))
+      .join(' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }, [pdfDoc]);
 
-  const handleToggleRead = useCallback(async () => {
-    if (isReading) {
-      stopReading();
-      return;
-    }
-    if (!pdfDoc) return;
+  // Read a specific page; if continuous mode is on, advance and recurse on end
+  const readPage = useCallback(async (pageNum: number) => {
     try {
-      const page = await pdfDoc.getPage(currentPage);
-      const textContent = await page.getTextContent();
-      const text = textContent.items
-        .map((item: any) => ('str' in item ? item.str : ''))
-        .join(' ')
-        .replace(/\s+/g, ' ')
-        .trim();
+      const text = await extractPageText(pageNum);
       if (!text) {
-        toast.info('No readable text on this page');
+        if (continuousRef.current && pageNum < totalPagesRef.current) {
+          // Skip empty page
+          setCurrentPage(pageNum + 1);
+          setTimeout(() => readPage(pageNum + 1), 200);
+        } else {
+          toast.info('No readable text on this page');
+        }
         return;
       }
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 1;
-      utterance.pitch = 1;
-      utterance.onend = () => setIsReading(false);
-      utterance.onerror = () => setIsReading(false);
-      setIsReading(true);
-      window.speechSynthesis.speak(utterance);
+      speak(text, () => {
+        if (continuousRef.current && pageNum < totalPagesRef.current) {
+          const next = pageNum + 1;
+          setCurrentPage(next);
+          // Small delay to let the page transition settle, then continue
+          setTimeout(() => readPage(next), 400);
+        }
+      });
     } catch (e) {
       console.error('Read aloud failed', e);
       toast.error('Could not read this page');
-      setIsReading(false);
     }
-  }, [isReading, pdfDoc, currentPage, stopReading]);
+  }, [extractPageText, speak]);
 
-  // Stop speech when page changes or unmounts
-  useEffect(() => {
-    return () => {
-      window.speechSynthesis.cancel();
-    };
-  }, []);
+  const handleToggleRead = useCallback(() => {
+    if (isSpeaking) {
+      stopSpeak();
+      return;
+    }
+    if (!pdfDoc) return;
+    readPage(currentPage);
+  }, [isSpeaking, pdfDoc, currentPage, readPage, stopSpeak]);
 
+  // Stop speech if user manually navigates away (but NOT during continuous auto-advance)
+  const lastReadPageRef = useRef(currentPage);
   useEffect(() => {
-    if (isReading) stopReading();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage]);
+    if (isSpeaking && !continuousRef.current && currentPage !== lastReadPageRef.current) {
+      stopSpeak();
+    }
+    lastReadPageRef.current = currentPage;
+  }, [currentPage, isSpeaking, stopSpeak]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -206,8 +213,13 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
         onToggleBookmarks={() => setBookmarksOpen(prev => !prev)}
         bookmarksOpen={bookmarksOpen}
         isCurrentPageBookmarked={currentPageBookmarked}
-        isReading={isReading}
+        isReading={isSpeaking}
         onToggleRead={handleToggleRead}
+        voices={voices}
+        speechSettings={speechSettings}
+        onSpeechSettingsChange={setSpeechSettings}
+        continuousRead={continuousRead}
+        onContinuousChange={setContinuousRead}
       />
 
       <ThumbnailSidebar
