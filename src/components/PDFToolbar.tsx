@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, PanelLeft, X, Bookmark } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, PanelLeft, X, Bookmark, Volume2, VolumeX } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import { cn } from '@/lib/utils';
 
@@ -17,6 +17,8 @@ interface PDFToolbarProps {
   onToggleBookmarks: () => void;
   bookmarksOpen: boolean;
   isCurrentPageBookmarked: boolean;
+  isReading: boolean;
+  onToggleRead: () => void;
 }
 
 const PDFToolbar: React.FC<PDFToolbarProps> = ({
@@ -33,6 +35,8 @@ const PDFToolbar: React.FC<PDFToolbarProps> = ({
   onToggleBookmarks,
   bookmarksOpen,
   isCurrentPageBookmarked,
+  isReading,
+  onToggleRead,
 }) => {
   const handlePageInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value, 10);
@@ -162,6 +166,21 @@ const PDFToolbar: React.FC<PDFToolbarProps> = ({
 
         {/* Right: bookmarks + theme toggle + close */}
         <div className="flex items-center gap-1 ml-4">
+          <button
+            onClick={onToggleRead}
+            className={cn(
+              "p-2 rounded-lg transition-colors",
+              "hover:bg-toolbar-foreground/10",
+              isReading && "bg-accent/20"
+            )}
+            title={isReading ? 'Stop reading' : 'Read page aloud'}
+          >
+            {isReading ? (
+              <VolumeX className="w-4 h-4 text-accent" />
+            ) : (
+              <Volume2 className="w-4 h-4 text-toolbar-foreground" />
+            )}
+          </button>
           <button
             onClick={onToggleBookmarks}
             className={cn(
