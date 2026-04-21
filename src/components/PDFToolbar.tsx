@@ -178,21 +178,15 @@ const PDFToolbar: React.FC<PDFToolbarProps> = ({
 
         {/* Right: bookmarks + theme toggle + close */}
         <div className="flex items-center gap-1 ml-4">
-          <button
-            onClick={onToggleRead}
-            className={cn(
-              "p-2 rounded-lg transition-colors",
-              "hover:bg-toolbar-foreground/10",
-              isReading && "bg-accent/20"
-            )}
-            title={isReading ? 'Stop reading' : 'Read page aloud'}
-          >
-            {isReading ? (
-              <VolumeX className="w-4 h-4 text-accent" />
-            ) : (
-              <Volume2 className="w-4 h-4 text-toolbar-foreground" />
-            )}
-          </button>
+          <ReadAloudControls
+            isReading={isReading}
+            onToggleRead={onToggleRead}
+            voices={voices}
+            settings={speechSettings}
+            onSettingsChange={onSpeechSettingsChange}
+            continuous={continuousRead}
+            onContinuousChange={onContinuousChange}
+          />
           <button
             onClick={onToggleBookmarks}
             className={cn(
