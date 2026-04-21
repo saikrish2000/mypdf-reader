@@ -4,7 +4,10 @@ import PDFToolbar from './PDFToolbar';
 import ThumbnailSidebar from './ThumbnailSidebar';
 import BookmarkPanel from './BookmarkPanel';
 import { usePDFStorage } from '@/hooks/usePDFStorage';
+import { cachePDF } from '@/lib/pdfCache';
 import { cn } from '@/lib/utils';
+import { Volume2, VolumeX } from 'lucide-react';
+import { toast } from 'sonner';
 
 // Set worker source
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
@@ -22,7 +25,8 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
   const [pdfDoc, setPdfDoc] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
-  const [scale, setScale] = useState(1.5);
+  const [scale, setScale] = useState(0.8);
+  const [isReading, setIsReading] = useState(false);
   const isRenderingRef = useRef(false);
   const [flipDirection, setFlipDirection] = useState<'left' | 'right' | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -40,9 +44,11 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
     const loadPDF = async () => {
       try {
         const arrayBuffer = await file.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer.slice(0) }).promise;
         setPdfDoc(pdf);
         setTotalPages(pdf.numPages);
+        // Cache the file so recents can re-open it
+        cachePDF(file.name, file);
 
         const saved = loadProgress(file.name);
         if (saved && saved.currentPage <= pdf.numPages) {
