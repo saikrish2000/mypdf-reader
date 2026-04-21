@@ -4,6 +4,7 @@ import PDFToolbar from './PDFToolbar';
 import ThumbnailSidebar from './ThumbnailSidebar';
 import BookmarkPanel from './BookmarkPanel';
 import { usePDFStorage } from '@/hooks/usePDFStorage';
+import { useSpeech } from '@/hooks/useSpeech';
 import { cachePDF } from '@/lib/pdfCache';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -25,7 +26,9 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [scale, setScale] = useState(0.8);
-  const [isReading, setIsReading] = useState(false);
+  const [continuousRead, setContinuousRead] = useState(false);
+  const continuousRef = useRef(false);
+  const totalPagesRef = useRef(0);
   const isRenderingRef = useRef(false);
   const [flipDirection, setFlipDirection] = useState<'left' | 'right' | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -34,6 +37,10 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
   const renderTaskRef = useRef<pdfjsLib.RenderTask | null>(null);
 
   const { saveProgress, loadProgress, getBookmarks, addBookmark, removeBookmark, isBookmarked } = usePDFStorage();
+  const { voices, settings: speechSettings, setSettings: setSpeechSettings, speak, stop: stopSpeak, isSpeaking } = useSpeech();
+
+  useEffect(() => { continuousRef.current = continuousRead; }, [continuousRead]);
+  useEffect(() => { totalPagesRef.current = totalPages; }, [totalPages]);
 
   const bookmarks = getBookmarks(file.name);
   const currentPageBookmarked = isBookmarked(file.name, currentPage);
