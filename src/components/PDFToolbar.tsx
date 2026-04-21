@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, PanelLeft, X, Bookmark } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, PanelLeft, X, Bookmark, Sparkles } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import ReadAloudControls from './ReadAloudControls';
 import type { SpeechSettings } from '@/hooks/useSpeech';
@@ -26,6 +26,8 @@ interface PDFToolbarProps {
   onSpeechSettingsChange: (next: Partial<SpeechSettings>) => void;
   continuousRead: boolean;
   onContinuousChange: (value: boolean) => void;
+  onSummarize: () => void;
+  summaryOpen: boolean;
 }
 
 const PDFToolbar: React.FC<PDFToolbarProps> = ({
