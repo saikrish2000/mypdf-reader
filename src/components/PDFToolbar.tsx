@@ -51,6 +51,8 @@ const PDFToolbar: React.FC<PDFToolbarProps> = ({
   onSpeechSettingsChange,
   continuousRead,
   onContinuousChange,
+  onSummarize,
+  summaryOpen,
 }) => {
   const handlePageInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value, 10);
@@ -189,6 +191,19 @@ const PDFToolbar: React.FC<PDFToolbarProps> = ({
             continuous={continuousRead}
             onContinuousChange={onContinuousChange}
           />
+          <button
+            onClick={onSummarize}
+            className={cn(
+              'p-2 rounded-lg transition-colors hover:bg-toolbar-foreground/10',
+              summaryOpen && 'bg-toolbar-foreground/10'
+            )}
+            title="Summarize this page with AI"
+          >
+            <Sparkles className={cn(
+              'w-4 h-4 text-toolbar-foreground',
+              summaryOpen && 'text-accent'
+            )} />
+          </button>
           <button
             onClick={onToggleBookmarks}
             className={cn(
