@@ -109,6 +109,57 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
     setBookmarkVersion(v => v + 1);
   }, [removeBookmark, file.name]);
 
+  // Read aloud current page using browser SpeechSynthesis (free, offline)
+  const stopReading = useCallback(() => {
+    window.speechSynthesis.cancel();
+    setIsReading(false);
+  }, []);
+
+  const handleToggleRead = useCallback(async () => {
+    if (isReading) {
+      stopReading();
+      return;
+    }
+    if (!pdfDoc) return;
+    try {
+      const page = await pdfDoc.getPage(currentPage);
+      const textContent = await page.getTextContent();
+      const text = textContent.items
+        .map((item: any) => ('str' in item ? item.str : ''))
+        .join(' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+      if (!text) {
+        toast.info('No readable text on this page');
+        return;
+      }
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 1;
+      utterance.pitch = 1;
+      utterance.onend = () => setIsReading(false);
+      utterance.onerror = () => setIsReading(false);
+      setIsReading(true);
+      window.speechSynthesis.speak(utterance);
+    } catch (e) {
+      console.error('Read aloud failed', e);
+      toast.error('Could not read this page');
+      setIsReading(false);
+    }
+  }, [isReading, pdfDoc, currentPage, stopReading]);
+
+  // Stop speech when page changes or unmounts
+  useEffect(() => {
+    return () => {
+      window.speechSynthesis.cancel();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isReading) stopReading();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage]);
+
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -149,6 +200,8 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
         onToggleBookmarks={() => setBookmarksOpen(prev => !prev)}
         bookmarksOpen={bookmarksOpen}
         isCurrentPageBookmarked={currentPageBookmarked}
+        isReading={isReading}
+        onToggleRead={handleToggleRead}
       />
 
       <ThumbnailSidebar
