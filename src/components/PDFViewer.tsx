@@ -278,6 +278,8 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
         onSpeechSettingsChange={setSpeechSettings}
         continuousRead={continuousRead}
         onContinuousChange={setContinuousRead}
+        onSummarize={handleSummarize}
+        summaryOpen={summaryOpen}
       />
 
       <ThumbnailSidebar
@@ -298,6 +300,29 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
         onGoToBookmark={handlePageChange}
         isOpen={bookmarksOpen}
         onClose={() => setBookmarksOpen(false)}
+      />
+
+      <SummaryPanel
+        isOpen={summaryOpen}
+        onClose={() => setSummaryOpen(false)}
+        pageNumber={summaryPage}
+        summary={summary}
+        isLoading={summaryLoading}
+        error={summaryError}
+        onRegenerate={() => generateSummary(summaryPage)}
+      />
+
+      <PlaybackControls
+        visible={isSpeaking}
+        isPlaying={isSpeaking}
+        isPaused={isPaused}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        rate={speechSettings.rate}
+        onPlayPause={() => (isPaused ? resumeSpeak() : pauseSpeak())}
+        onStop={stopSpeak}
+        onSkipBack={skipBackward}
+        onSkipForward={skipForward}
       />
 
       <div
