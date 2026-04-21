@@ -44,6 +44,11 @@ const PDFToolbar: React.FC<PDFToolbarProps> = ({
   isCurrentPageBookmarked,
   isReading,
   onToggleRead,
+  voices,
+  speechSettings,
+  onSpeechSettingsChange,
+  continuousRead,
+  onContinuousChange,
 }) => {
   const handlePageInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value, 10);
