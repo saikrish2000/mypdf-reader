@@ -5,7 +5,9 @@ import RecentFiles from '@/components/RecentFiles';
 import ThemeToggle from '@/components/ThemeToggle';
 import { usePDFStorage } from '@/hooks/usePDFStorage';
 import { useTheme } from '@/hooks/useTheme';
+import { getCachedPDF } from '@/lib/pdfCache';
 import { BookOpen } from 'lucide-react';
+import { toast } from 'sonner';
 
 const Index = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -31,8 +33,15 @@ const Index = () => {
     setRecentFiles(getRecentFiles());
   }, [getRecentFiles]);
 
-  const handleRecentSelect = useCallback((fileName: string) => {
-    // User needs to re-upload the file; progress will be restored automatically
+  const handleRecentSelect = useCallback(async (fileName: string) => {
+    setIsLoading(true);
+    const cached = await getCachedPDF(fileName);
+    setIsLoading(false);
+    if (cached) {
+      setSelectedFile(cached);
+    } else {
+      toast.error('File not cached. Please re-upload it to continue reading.');
+    }
   }, []);
 
   if (selectedFile) {

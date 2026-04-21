@@ -4,7 +4,9 @@ import PDFToolbar from './PDFToolbar';
 import ThumbnailSidebar from './ThumbnailSidebar';
 import BookmarkPanel from './BookmarkPanel';
 import { usePDFStorage } from '@/hooks/usePDFStorage';
+import { cachePDF } from '@/lib/pdfCache';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 // Set worker source
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
@@ -22,7 +24,8 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
   const [pdfDoc, setPdfDoc] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
-  const [scale, setScale] = useState(1.5);
+  const [scale, setScale] = useState(0.8);
+  const [isReading, setIsReading] = useState(false);
   const isRenderingRef = useRef(false);
   const [flipDirection, setFlipDirection] = useState<'left' | 'right' | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -40,9 +43,11 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
     const loadPDF = async () => {
       try {
         const arrayBuffer = await file.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer.slice(0) }).promise;
         setPdfDoc(pdf);
         setTotalPages(pdf.numPages);
+        // Cache the file so recents can re-open it
+        cachePDF(file.name, file);
 
         const saved = loadProgress(file.name);
         if (saved && saved.currentPage <= pdf.numPages) {
@@ -103,6 +108,57 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
     setBookmarkVersion(v => v + 1);
   }, [removeBookmark, file.name]);
 
+  // Read aloud current page using browser SpeechSynthesis (free, offline)
+  const stopReading = useCallback(() => {
+    window.speechSynthesis.cancel();
+    setIsReading(false);
+  }, []);
+
+  const handleToggleRead = useCallback(async () => {
+    if (isReading) {
+      stopReading();
+      return;
+    }
+    if (!pdfDoc) return;
+    try {
+      const page = await pdfDoc.getPage(currentPage);
+      const textContent = await page.getTextContent();
+      const text = textContent.items
+        .map((item: any) => ('str' in item ? item.str : ''))
+        .join(' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+      if (!text) {
+        toast.info('No readable text on this page');
+        return;
+      }
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 1;
+      utterance.pitch = 1;
+      utterance.onend = () => setIsReading(false);
+      utterance.onerror = () => setIsReading(false);
+      setIsReading(true);
+      window.speechSynthesis.speak(utterance);
+    } catch (e) {
+      console.error('Read aloud failed', e);
+      toast.error('Could not read this page');
+      setIsReading(false);
+    }
+  }, [isReading, pdfDoc, currentPage, stopReading]);
+
+  // Stop speech when page changes or unmounts
+  useEffect(() => {
+    return () => {
+      window.speechSynthesis.cancel();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isReading) stopReading();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage]);
+
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -143,6 +199,8 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
         onToggleBookmarks={() => setBookmarksOpen(prev => !prev)}
         bookmarksOpen={bookmarksOpen}
         isCurrentPageBookmarked={currentPageBookmarked}
+        isReading={isReading}
+        onToggleRead={handleToggleRead}
       />
 
       <ThumbnailSidebar
