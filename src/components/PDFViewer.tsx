@@ -178,13 +178,49 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
   }, [extractPageText, speak]);
 
   const handleToggleRead = useCallback(() => {
+    // Toolbar speaker now toggles play/pause when active, starts when idle
     if (isSpeaking) {
-      stopSpeak();
+      if (isPaused) resumeSpeak();
+      else pauseSpeak();
       return;
     }
     if (!pdfDoc) return;
     readPage(currentPage);
-  }, [isSpeaking, pdfDoc, currentPage, readPage, stopSpeak]);
+  }, [isSpeaking, isPaused, pdfDoc, currentPage, readPage, pauseSpeak, resumeSpeak]);
+
+  // AI summary handler
+  const generateSummary = useCallback(async (pageNum: number) => {
+    setSummaryOpen(true);
+    setSummaryPage(pageNum);
+    setSummaryLoading(true);
+    setSummaryError(null);
+    setSummary(null);
+    try {
+      const text = await extractPageText(pageNum);
+      if (!text) {
+        setSummaryError('No readable text on this page to summarize.');
+        return;
+      }
+      const { data, error } = await supabase.functions.invoke('summarize-page', {
+        body: { text, pageNumber: pageNum },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) {
+        setSummaryError((data as any).error);
+        return;
+      }
+      setSummary((data as any)?.summary ?? '');
+    } catch (e: any) {
+      console.error('Summarize failed', e);
+      setSummaryError(e?.message || 'Failed to generate summary');
+    } finally {
+      setSummaryLoading(false);
+    }
+  }, [extractPageText]);
+
+  const handleSummarize = useCallback(() => {
+    generateSummary(currentPage);
+  }, [generateSummary, currentPage]);
 
   // Stop speech if user manually navigates away (but NOT during continuous auto-advance)
   const lastReadPageRef = useRef(currentPage);
