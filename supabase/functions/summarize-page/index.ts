@@ -45,32 +45,45 @@ serve(async (req) => {
 2. 3-5 bullet points capturing key takeaways.
 Use plain markdown. Do NOT invent information that is not in the text. If the page has very little meaningful content (e.g. cover page, table of contents, blank), say so briefly.`;
 
-    const response = await fetch(
-      "https://ai.gateway.lovable.dev/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
+    // Retry with exponential backoff on 429
+    const maxAttempts = 3;
+    let response: Response | null = null;
+    let lastStatus = 0;
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      response = await fetch(
+        "https://ai.gateway.lovable.dev/v1/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "google/gemini-3-flash-preview",
+            messages: [
+              { role: "system", content: systemPrompt },
+              {
+                role: "user",
+                content: `Summarize page ${pageNumber ?? ""} of this PDF:\n\n${truncated}`,
+              },
+            ],
+          }),
         },
-        body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
-          messages: [
-            { role: "system", content: systemPrompt },
-            {
-              role: "user",
-              content: `Summarize page ${pageNumber ?? ""} of this PDF:\n\n${truncated}`,
-            },
-          ],
-        }),
-      },
-    );
+      );
+      lastStatus = response.status;
+      if (response.status !== 429) break;
+      if (attempt < maxAttempts - 1) {
+        const backoff = 500 * Math.pow(2, attempt) + Math.floor(Math.random() * 250);
+        await new Promise((r) => setTimeout(r, backoff));
+      }
+    }
 
-    if (!response.ok) {
-      if (response.status === 429) {
+    if (!response || !response.ok) {
+      if (lastStatus === 429) {
         return new Response(
           JSON.stringify({
-            error: "Rate limit reached. Please try again in a moment.",
+            error: "The AI service is busy right now. Please wait a few seconds and retry.",
+            retryable: true,
           }),
           {
             status: 429,
