@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, PanelLeft, X, Bookmark, Spa
 import ThemeToggle from './ThemeToggle';
 import ReadAloudControls from './ReadAloudControls';
 import type { SpeechSettings } from '@/hooks/useSpeech';
+import type { Theme } from '@/hooks/useTheme';
 import { cn } from '@/lib/utils';
 
 interface PDFToolbarProps {
@@ -12,8 +13,9 @@ interface PDFToolbarProps {
   scale: number;
   onPageChange: (page: number) => void;
   onScaleChange: (scale: number) => void;
-  theme: 'light' | 'dark';
+  theme: Theme;
   onToggleTheme: () => void;
+  onSelectTheme?: (theme: Theme) => void;
   onToggleSidebar: () => void;
   sidebarOpen: boolean;
   onToggleBookmarks: () => void;
@@ -218,7 +220,7 @@ const PDFToolbar: React.FC<PDFToolbarProps> = ({
               isCurrentPageBookmarked && "fill-accent text-accent"
             )} />
           </button>
-          <ThemeToggle theme={theme} onToggle={onToggleTheme} variant="toolbar" />
+          <ThemeToggle theme={theme} onToggle={onToggleTheme} onSelect={onSelectTheme} variant="toolbar" />
           <button
             onClick={() => window.history.back()}
             className="p-2 rounded-lg hover:bg-toolbar-foreground/10 transition-colors"
