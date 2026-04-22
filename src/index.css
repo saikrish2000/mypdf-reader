@@ -124,6 +124,116 @@
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
+
+  /* Sepia theme — warm vintage book tones */
+  .sepia {
+    --background: 36 38% 90%;
+    --foreground: 25 35% 18%;
+
+    --card: 36 45% 93%;
+    --card-foreground: 25 35% 18%;
+
+    --popover: 36 45% 93%;
+    --popover-foreground: 25 35% 18%;
+
+    --primary: 25 40% 22%;
+    --primary-foreground: 36 38% 95%;
+
+    --secondary: 34 30% 84%;
+    --secondary-foreground: 25 35% 22%;
+
+    --muted: 34 25% 82%;
+    --muted-foreground: 25 20% 38%;
+
+    --accent: 22 75% 42%;
+    --accent-foreground: 36 38% 96%;
+
+    --paper: 38 50% 88%;
+    --paper-shadow: 25 25% 55%;
+
+    --progress: 22 75% 42%;
+    --progress-track: 34 25% 78%;
+
+    --toolbar: 25 35% 18%;
+    --toolbar-foreground: 36 38% 92%;
+    --toolbar-muted: 25 15% 55%;
+
+    --destructive: 0 70% 45%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 32 25% 72%;
+    --input: 32 25% 72%;
+    --ring: 22 75% 42%;
+
+    --shadow-soft: 0 4px 20px -4px hsl(25 30% 40% / 0.25);
+    --shadow-document: 0 8px 40px -8px hsl(25 30% 35% / 0.3),
+                       0 2px 8px -2px hsl(25 30% 35% / 0.15);
+    --shadow-hover: 0 12px 48px -12px hsl(25 30% 35% / 0.4);
+
+    --sidebar-background: 36 38% 90%;
+    --sidebar-foreground: 25 35% 18%;
+    --sidebar-primary: 25 40% 22%;
+    --sidebar-primary-foreground: 36 38% 95%;
+    --sidebar-accent: 34 30% 84%;
+    --sidebar-accent-foreground: 25 35% 22%;
+    --sidebar-border: 32 25% 72%;
+    --sidebar-ring: 22 75% 42%;
+  }
+
+  /* High Contrast theme — pure black on white for maximum readability */
+  .contrast {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 0%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 0%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 0%;
+
+    --primary: 0 0% 0%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 92%;
+    --secondary-foreground: 0 0% 0%;
+
+    --muted: 0 0% 95%;
+    --muted-foreground: 0 0% 20%;
+
+    --accent: 220 100% 40%;
+    --accent-foreground: 0 0% 100%;
+
+    --paper: 0 0% 100%;
+    --paper-shadow: 0 0% 0%;
+
+    --progress: 220 100% 40%;
+    --progress-track: 0 0% 85%;
+
+    --toolbar: 0 0% 0%;
+    --toolbar-foreground: 0 0% 100%;
+    --toolbar-muted: 0 0% 75%;
+
+    --destructive: 0 100% 40%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 0%;
+    --input: 0 0% 0%;
+    --ring: 220 100% 40%;
+
+    --shadow-soft: 0 4px 20px -4px hsl(0 0% 0% / 0.5);
+    --shadow-document: 0 8px 40px -8px hsl(0 0% 0% / 0.6),
+                       0 2px 8px -2px hsl(0 0% 0% / 0.3);
+    --shadow-hover: 0 12px 48px -12px hsl(0 0% 0% / 0.7);
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 0 0% 0%;
+    --sidebar-primary: 0 0% 0%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 92%;
+    --sidebar-accent-foreground: 0 0% 0%;
+    --sidebar-border: 0 0% 0%;
+    --sidebar-ring: 220 100% 40%;
+  }
 }
 
 @layer base {

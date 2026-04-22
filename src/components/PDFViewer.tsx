@@ -11,6 +11,7 @@ import { cachePDF } from '@/lib/pdfCache';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import type { Theme } from '@/hooks/useTheme';
 
 // Set worker source
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
@@ -18,11 +19,12 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs
 interface PDFViewerProps {
   file: File;
   onClose: () => void;
-  theme: 'light' | 'dark';
+  theme: Theme;
   onToggleTheme: () => void;
+  onSelectTheme?: (theme: Theme) => void;
 }
 
-const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleTheme }) => {
+const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleTheme, onSelectTheme }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [pdfDoc, setPdfDoc] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
@@ -271,6 +273,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
         onScaleChange={setScale}
         theme={theme}
         onToggleTheme={onToggleTheme}
+        onSelectTheme={onSelectTheme}
         onToggleSidebar={() => setSidebarOpen(prev => !prev)}
         sidebarOpen={sidebarOpen}
         onToggleBookmarks={() => setBookmarksOpen(prev => !prev)}
