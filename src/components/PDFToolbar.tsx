@@ -41,6 +41,7 @@ const PDFToolbar: React.FC<PDFToolbarProps> = ({
   onScaleChange,
   theme,
   onToggleTheme,
+  onSelectTheme,
   onToggleSidebar,
   sidebarOpen,
   onToggleBookmarks,

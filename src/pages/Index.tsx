@@ -14,7 +14,7 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { getRecentFiles } = usePDFStorage();
   const [recentFiles, setRecentFiles] = useState<ReturnType<typeof getRecentFiles>>([]);
-  const { theme, toggleTheme } = useTheme();
+  const { theme, toggleTheme, setTheme } = useTheme();
 
   useEffect(() => {
     setRecentFiles(getRecentFiles());
@@ -51,6 +51,7 @@ const Index = () => {
         onClose={handleClose}
         theme={theme}
         onToggleTheme={toggleTheme}
+        onSelectTheme={setTheme}
       />
     );
   }
@@ -59,7 +60,7 @@ const Index = () => {
     <div className="min-h-screen bg-background transition-colors duration-300">
       {/* Theme toggle - top right */}
       <div className="fixed top-4 right-4 z-10">
-        <ThemeToggle theme={theme} onToggle={toggleTheme} />
+        <ThemeToggle theme={theme} onToggle={toggleTheme} onSelect={setTheme} />
       </div>
 
       <div className="container max-w-4xl mx-auto px-4 py-12 sm:py-20">
