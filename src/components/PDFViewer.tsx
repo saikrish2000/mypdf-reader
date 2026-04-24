@@ -4,6 +4,7 @@ import PDFToolbar from './PDFToolbar';
 import ThumbnailSidebar from './ThumbnailSidebar';
 import BookmarkPanel from './BookmarkPanel';
 import SummaryPanel from './SummaryPanel';
+import ChatPanel, { type ChatMessage } from './ChatPanel';
 import PlaybackControls from './PlaybackControls';
 import { usePDFStorage } from '@/hooks/usePDFStorage';
 import { useSpeech } from '@/hooks/useSpeech';
@@ -62,6 +63,14 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [summaryError, setSummaryError] = useState<string | null>(null);
   const [summaryPage, setSummaryPage] = useState<number>(1);
+
+  // AI chat state (current page)
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatStreaming, setChatStreaming] = useState(false);
+  const [chatError, setChatError] = useState<string | null>(null);
+  const chatAbortRef = useRef<AbortController | null>(null);
+  const chatPageRef = useRef<number>(1);
 
   useEffect(() => { continuousRef.current = continuousRead; }, [continuousRead]);
   useEffect(() => { totalPagesRef.current = totalPages; }, [totalPages]);
