@@ -238,6 +238,134 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
     generateSummary(currentPage);
   }, [generateSummary, currentPage]);
 
+  // ---- Chat (current page) streaming ----
+  const cancelChatStream = useCallback(() => {
+    chatAbortRef.current?.abort();
+    chatAbortRef.current = null;
+  }, []);
+
+  const streamChat = useCallback(async (history: ChatMessage[], pageNum: number) => {
+    setChatStreaming(true);
+    setChatError(null);
+    cancelChatStream();
+    const controller = new AbortController();
+    chatAbortRef.current = controller;
+
+    try {
+      const pageText = await extractPageText(pageNum);
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-page`;
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({ pageText, pageNumber: pageNum, messages: history }),
+        signal: controller.signal,
+      });
+
+      if (!resp.ok || !resp.body) {
+        let msg = 'Failed to start chat';
+        try {
+          const j = await resp.json();
+          msg = j?.error || msg;
+        } catch {}
+        if (resp.status === 429) msg = msg || 'AI is busy. Please try again in a few seconds.';
+        if (resp.status === 402) msg = 'AI credits exhausted. Add funds in Settings → Workspace → Usage.';
+        setChatError(msg);
+        setChatStreaming(false);
+        return;
+      }
+
+      // Insert empty assistant message we'll progressively fill
+      setChatMessages((prev) => [...prev, { role: 'assistant', content: '' }]);
+
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let done = false;
+      let assistantSoFar = '';
+
+      while (!done) {
+        const { done: d, value } = await reader.read();
+        if (d) break;
+        buffer += decoder.decode(value, { stream: true });
+        let nl: number;
+        while ((nl = buffer.indexOf('\n')) !== -1) {
+          let line = buffer.slice(0, nl);
+          buffer = buffer.slice(nl + 1);
+          if (line.endsWith('\r')) line = line.slice(0, -1);
+          if (!line || line.startsWith(':')) continue;
+          if (!line.startsWith('data: ')) continue;
+          const json = line.slice(6).trim();
+          if (json === '[DONE]') { done = true; break; }
+          try {
+            const parsed = JSON.parse(json);
+            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+            if (content) {
+              assistantSoFar += content;
+              setChatMessages((prev) => {
+                const next = [...prev];
+                const last = next[next.length - 1];
+                if (last && last.role === 'assistant') {
+                  next[next.length - 1] = { ...last, content: assistantSoFar };
+                }
+                return next;
+              });
+            }
+          } catch {
+            // partial JSON; put back and wait
+            buffer = line + '\n' + buffer;
+            break;
+          }
+        }
+      }
+    } catch (e: any) {
+      if (e?.name !== 'AbortError') {
+        console.error('Chat stream error', e);
+        setChatError(e?.message || 'Chat failed');
+      }
+    } finally {
+      setChatStreaming(false);
+      chatAbortRef.current = null;
+    }
+  }, [extractPageText, cancelChatStream]);
+
+  const handleChatSend = useCallback((text: string) => {
+    const userMsg: ChatMessage = { role: 'user', content: text };
+    const next = [...chatMessages, userMsg];
+    setChatMessages(next);
+    streamChat(next, chatPageRef.current);
+  }, [chatMessages, streamChat]);
+
+  const handleChatRetry = useCallback(() => {
+    // Re-run from current history (drop trailing empty assistant if any)
+    const cleaned = [...chatMessages];
+    if (cleaned[cleaned.length - 1]?.role === 'assistant' && !cleaned[cleaned.length - 1].content) {
+      cleaned.pop();
+    }
+    if (cleaned.length === 0) return;
+    setChatMessages(cleaned);
+    streamChat(cleaned, chatPageRef.current);
+  }, [chatMessages, streamChat]);
+
+  const handleChatClear = useCallback(() => {
+    cancelChatStream();
+    setChatMessages([]);
+    setChatError(null);
+  }, [cancelChatStream]);
+
+  // Reset chat when current page changes (chat is scoped to current page)
+  useEffect(() => {
+    if (chatPageRef.current !== currentPage) {
+      chatPageRef.current = currentPage;
+      cancelChatStream();
+      setChatMessages([]);
+      setChatError(null);
+      setChatStreaming(false);
+    }
+  }, [currentPage, cancelChatStream]);
+
   // Stop speech if user manually navigates away (but NOT during continuous auto-advance)
   const lastReadPageRef = useRef(currentPage);
   useEffect(() => {
