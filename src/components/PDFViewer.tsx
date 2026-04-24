@@ -425,6 +425,8 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
         onContinuousChange={setContinuousRead}
         onSummarize={handleSummarize}
         summaryOpen={summaryOpen}
+        onToggleChat={() => setChatOpen(prev => !prev)}
+        chatOpen={chatOpen}
       />
 
       <ThumbnailSidebar
@@ -455,6 +457,18 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
         isLoading={summaryLoading}
         error={summaryError}
         onRegenerate={() => generateSummary(summaryPage)}
+      />
+
+      <ChatPanel
+        isOpen={chatOpen}
+        onClose={() => setChatOpen(false)}
+        pageNumber={currentPage}
+        messages={chatMessages}
+        isStreaming={chatStreaming}
+        error={chatError}
+        onSend={handleChatSend}
+        onRetry={handleChatRetry}
+        onClear={handleChatClear}
       />
 
       <PlaybackControls
