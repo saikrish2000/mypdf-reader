@@ -14,7 +14,89 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      annotations: {
+        Row: {
+          color: string
+          created_at: string
+          document_id: string
+          id: string
+          note_text: string | null
+          page_number: number
+          quote: string
+          rects: Json
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          document_id: string
+          id?: string
+          note_text?: string | null
+          page_number: number
+          quote?: string
+          rects?: Json
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          document_id?: string
+          id?: string
+          note_text?: string | null
+          page_number?: number
+          quote?: string
+          rects?: Json
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "annotations_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      documents: {
+        Row: {
+          content_hash: string
+          created_at: string
+          file_name: string
+          id: string
+          last_opened_at: string
+          page_count: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content_hash: string
+          created_at?: string
+          file_name: string
+          id?: string
+          last_opened_at?: string
+          page_count?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content_hash?: string
+          created_at?: string
+          file_name?: string
+          id?: string
+          last_opened_at?: string
+          page_count?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
