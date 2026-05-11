@@ -71,7 +71,7 @@ export function useAnnotations(documentId: string | null) {
       .eq('document_id', documentId)
       .order('created_at', { ascending: true })
       .then(({ data }) => {
-        setAnnotations((data ?? []) as Annotation[]);
+        setAnnotations((data ?? []) as unknown as Annotation[]);
         setLoading(false);
       });
 
@@ -82,16 +82,16 @@ export function useAnnotations(documentId: string | null) {
         (payload) => {
           setAnnotations((prev) => {
             if (payload.eventType === 'INSERT') {
-              const row = payload.new as Annotation;
+              const row = payload.new as unknown as Annotation;
               if (prev.some(a => a.id === row.id)) return prev;
               return [...prev, row];
             }
             if (payload.eventType === 'UPDATE') {
-              const row = payload.new as Annotation;
+              const row = payload.new as unknown as Annotation;
               return prev.map(a => a.id === row.id ? row : a);
             }
             if (payload.eventType === 'DELETE') {
-              const row = payload.old as Annotation;
+              const row = payload.old as unknown as Annotation;
               return prev.filter(a => a.id !== row.id);
             }
             return prev;
@@ -103,19 +103,21 @@ export function useAnnotations(documentId: string | null) {
 
   const create = useCallback(async (a: Omit<Annotation, 'id' | 'created_at' | 'updated_at' | 'document_id'>) => {
     if (!documentId || !user) return null;
+    const payload: any = { ...a, document_id: documentId, user_id: user.id };
     const { data, error } = await supabase
       .from('annotations')
-      .insert({ ...a, document_id: documentId, user_id: user.id })
+      .insert(payload)
       .select('*')
       .single();
     if (error) return null;
-    setAnnotations(prev => prev.some(x => x.id === data.id) ? prev : [...prev, data as Annotation]);
-    return data as Annotation;
+    const row = data as unknown as Annotation;
+    setAnnotations(prev => prev.some(x => x.id === row.id) ? prev : [...prev, row]);
+    return row;
   }, [documentId, user]);
 
   const update = useCallback(async (id: string, patch: Partial<Annotation>) => {
     setAnnotations(prev => prev.map(a => a.id === id ? { ...a, ...patch } as Annotation : a));
-    await supabase.from('annotations').update(patch).eq('id', id);
+    await supabase.from('annotations').update(patch as any).eq('id', id);
   }, []);
 
   const remove = useCallback(async (id: string) => {
