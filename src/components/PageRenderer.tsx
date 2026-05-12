@@ -32,6 +32,7 @@ const PageRenderer: React.FC<PageRendererProps> = ({
   const textLayerRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const renderTaskRef = useRef<pdfjsLib.RenderTask | null>(null);
+  const renderCycleRef = useRef(0);
   const [size, setSize] = useState<{ w: number; h: number } | null>(null);
   const [toolbar, setToolbar] = useState<{ x: number; y: number; rects: AnnotationRect[]; quote: string } | null>(null);
   const [editingNote, setEditingNote] = useState<string | null>(null);
@@ -39,28 +40,42 @@ const PageRenderer: React.FC<PageRendererProps> = ({
   // Render canvas + text layer
   useEffect(() => {
     let cancelled = false;
+    const cycle = ++renderCycleRef.current;
+
     (async () => {
-      const page = await pdfDoc.getPage(pageNumber);
-      const viewport = page.getViewport({ scale });
-      if (cancelled) return;
-      setSize({ w: viewport.width, h: viewport.height });
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      canvas.width = viewport.width;
-      canvas.height = viewport.height;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-      if (renderTaskRef.current) renderTaskRef.current.cancel();
       try {
+        const page = await pdfDoc.getPage(pageNumber);
+        const viewport = page.getViewport({ scale });
+        if (cancelled || renderCycleRef.current !== cycle) return;
+
+        setSize({ w: viewport.width, h: viewport.height });
+
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
+        const outputScale = window.devicePixelRatio || 1;
+        canvas.width = Math.floor(viewport.width * outputScale);
+        canvas.height = Math.floor(viewport.height * outputScale);
+        canvas.style.width = `${viewport.width}px`;
+        canvas.style.height = `${viewport.height}px`;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        ctx.setTransform(outputScale, 0, 0, outputScale, 0, 0);
+        ctx.clearRect(0, 0, viewport.width, viewport.height);
+
+        if (renderTaskRef.current) renderTaskRef.current.cancel();
         renderTaskRef.current = page.render({ canvasContext: ctx, viewport });
         await renderTaskRef.current.promise;
       } catch (e: any) {
         if (e?.name !== 'RenderingCancelledException') console.error(e);
+        return;
       }
 
       // Text layer
       const layer = textLayerRef.current;
-      if (layer && !cancelled) {
+      if (layer && !cancelled && renderCycleRef.current === cycle) {
         layer.innerHTML = '';
         layer.style.width = `${viewport.width}px`;
         layer.style.height = `${viewport.height}px`;
@@ -69,14 +84,14 @@ const PageRenderer: React.FC<PageRendererProps> = ({
           // @ts-ignore - pdfjs has TextLayer in newer versions
           const TextLayer = (pdfjsLib as any).TextLayer;
           if (TextLayer) {
-            const tl = new TextLayer({ textContentSource: textContent, container: layer, viewport });
+            const tl = new TextLayer({ textContentSource: textContent, container: layer, viewport: viewport.clone({ dontFlip: true }) });
             await tl.render();
           } else {
             // fallback for older pdfjs
             await (pdfjsLib as any).renderTextLayer({
               textContentSource: textContent,
               container: layer,
-              viewport,
+              viewport: viewport.clone({ dontFlip: true }),
             }).promise;
           }
         } catch (e) {
@@ -165,6 +180,7 @@ const PageRenderer: React.FC<PageRendererProps> = ({
           opacity: 0.25,
           color: 'transparent',
           lineHeight: 1,
+          zIndex: 1,
         }}
       />
 
