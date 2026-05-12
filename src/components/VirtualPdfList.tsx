@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
-import { useVirtualizer } from '@tanstack/react-virtual';
 import PageRenderer from './PageRenderer';
 import type { Annotation, AnnotationRect } from '@/hooks/useAnnotations';
 
@@ -21,6 +20,7 @@ interface VirtualPdfListProps {
 
 const GAP = 24;
 const DEFAULT_HEIGHT = 1000;
+const OVERSCAN_PX = 1600;
 
 const VirtualPdfList: React.FC<VirtualPdfListProps> = ({
   pdfDoc, totalPages, scale, currentPage, onVisiblePageChange, scrollToToken,
@@ -28,6 +28,8 @@ const VirtualPdfList: React.FC<VirtualPdfListProps> = ({
 }) => {
   const parentRef = useRef<HTMLDivElement>(null);
   const [heights, setHeights] = useState<number[]>([]);
+  const [scrollTop, setScrollTop] = useState(0);
+  const [viewportHeight, setViewportHeight] = useState(0);
 
   // Precompute page heights for current scale
   useEffect(() => {
@@ -64,58 +66,94 @@ const VirtualPdfList: React.FC<VirtualPdfListProps> = ({
     return m;
   }, [annotations]);
 
-  const virtualizer = useVirtualizer({
-    count: totalPages,
-    getScrollElement: () => parentRef.current,
-    estimateSize: (i) => (heights[i] ?? DEFAULT_HEIGHT) + GAP,
-    overscan: 2,
-  });
+  const pageOffsets = useMemo(() => {
+    const offsets = new Array(totalPages + 1).fill(0);
+    for (let i = 0; i < totalPages; i++) {
+      offsets[i + 1] = offsets[i] + (heights[i] ?? DEFAULT_HEIGHT) + GAP;
+    }
+    return offsets;
+  }, [heights, totalPages]);
 
-  // Re-measure when heights change
-  useEffect(() => { virtualizer.measure(); }, [heights, virtualizer]);
+  const renderedRange = useMemo(() => {
+    const paddedTop = Math.max(0, scrollTop - OVERSCAN_PX);
+    const paddedBottom = scrollTop + viewportHeight + OVERSCAN_PX;
+
+    let startIndex = 0;
+    while (startIndex < totalPages - 1 && pageOffsets[startIndex + 1] < paddedTop) {
+      startIndex += 1;
+    }
+
+    let endIndex = startIndex;
+    while (endIndex < totalPages - 1 && pageOffsets[endIndex] < paddedBottom) {
+      endIndex += 1;
+    }
+
+    const topSpacer = pageOffsets[startIndex] ?? 0;
+    const renderedHeight = Math.max(0, (pageOffsets[endIndex + 1] ?? topSpacer) - topSpacer);
+    const totalHeight = pageOffsets[totalPages] ?? 0;
+
+    return {
+      startIndex,
+      endIndex,
+      topSpacer,
+      bottomSpacer: Math.max(0, totalHeight - topSpacer - renderedHeight),
+    };
+  }, [pageOffsets, scrollTop, totalPages, viewportHeight]);
 
   // External jump
   useEffect(() => {
     if (scrollToToken < 0) return;
-    virtualizer.scrollToIndex(currentPage - 1, { align: 'start' });
-  }, [scrollToToken]); // eslint-disable-line react-hooks/exhaustive-deps
+    parentRef.current?.scrollTo({ top: pageOffsets[currentPage - 1] ?? 0, behavior: 'smooth' });
+  }, [currentPage, pageOffsets, scrollToToken]);
 
   // Track visible page
   useEffect(() => {
     const el = parentRef.current;
     if (!el) return;
-    const onScroll = () => {
-      const items = virtualizer.getVirtualItems();
-      if (!items.length) return;
+
+    const updateViewport = () => {
+      setScrollTop(el.scrollTop);
+      setViewportHeight(el.clientHeight);
       const center = el.scrollTop + el.clientHeight / 2;
-      const found = items.find(v => v.start <= center && v.end >= center) ?? items[0];
-      const page = found.index + 1;
+      let page = 1;
+
+      for (let i = 0; i < totalPages; i++) {
+        const start = pageOffsets[i] ?? 0;
+        const end = pageOffsets[i + 1] ?? start;
+        if (center >= start && center < end) {
+          page = i + 1;
+          break;
+        }
+        if (center >= end) page = Math.min(totalPages, i + 2);
+      }
+
       if (page !== currentPage) onVisiblePageChange(page);
     };
-    el.addEventListener('scroll', onScroll, { passive: true });
-    return () => el.removeEventListener('scroll', onScroll);
-  }, [virtualizer, currentPage, onVisiblePageChange]);
+
+    updateViewport();
+    el.addEventListener('scroll', updateViewport, { passive: true });
+
+    const resizeObserver = new ResizeObserver(updateViewport);
+    resizeObserver.observe(el);
+
+    return () => {
+      el.removeEventListener('scroll', updateViewport);
+      resizeObserver.disconnect();
+    };
+  }, [currentPage, onVisiblePageChange, pageOffsets, totalPages]);
 
   return (
     <div ref={parentRef} className="flex-1 overflow-auto p-4 sm:p-8">
-      <div style={{ height: virtualizer.getTotalSize(), width: '100%', position: 'relative' }}>
-        {virtualizer.getVirtualItems().map(v => (
-          <div
-            key={v.key}
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              transform: `translateY(${v.start}px)`,
-              paddingBottom: GAP,
-            }}
-          >
+      <div style={{ paddingTop: renderedRange.topSpacer, paddingBottom: renderedRange.bottomSpacer }}>
+        {Array.from({ length: renderedRange.endIndex - renderedRange.startIndex + 1 }, (_, offset) => {
+          const pageIndex = renderedRange.startIndex + offset;
+          return (
+          <div key={pageIndex} style={{ paddingBottom: GAP }}>
             <PageRenderer
               pdfDoc={pdfDoc}
-              pageNumber={v.index + 1}
+              pageNumber={pageIndex + 1}
               scale={scale}
-              annotations={annotationsByPage.get(v.index + 1) ?? []}
+              annotations={annotationsByPage.get(pageIndex + 1) ?? []}
               canAnnotate={canAnnotate}
               onCreateHighlight={onCreateHighlight}
               onCreateNote={onCreateNote}
@@ -123,7 +161,7 @@ const VirtualPdfList: React.FC<VirtualPdfListProps> = ({
               onUpdateAnnotation={onUpdateAnnotation}
             />
           </div>
-        ))}
+        )})}
       </div>
     </div>
   );
