@@ -66,6 +66,11 @@ const PageRenderer: React.FC<PageRendererProps> = ({
         if (!ctx) return;
 
         ctx.setTransform(outputScale, 0, 0, outputScale, 0, 0);
+        
+        // Fill with white background first to make PDF visible
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, viewport.width, viewport.height);
+        
         ctx.clearRect(0, 0, viewport.width, viewport.height);
 
         if (renderTaskRef.current) renderTaskRef.current.cancel();
@@ -150,7 +155,7 @@ const PageRenderer: React.FC<PageRendererProps> = ({
       style={{ width: size.w, height: size.h }}
       onMouseUp={handleMouseUp}
     >
-      <canvas ref={canvasRef} className="block" />
+      <canvas ref={canvasRef} className="block bg-white" />
 
       {/* Highlight layer (under text for selectability) */}
       <div className="absolute inset-0 pointer-events-none">
