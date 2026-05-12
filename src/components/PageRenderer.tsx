@@ -43,9 +43,12 @@ const PageRenderer: React.FC<PageRendererProps> = ({
     const cycle = ++renderCycleRef.current;
 
     (async () => {
+      let page: pdfjsLib.PDFPageProxy | null = null;
+      let viewport: pdfjsLib.PageViewport | null = null;
+
       try {
-        const page = await pdfDoc.getPage(pageNumber);
-        const viewport = page.getViewport({ scale });
+        page = await pdfDoc.getPage(pageNumber);
+        viewport = page.getViewport({ scale });
         if (cancelled || renderCycleRef.current !== cycle) return;
 
         setSize({ w: viewport.width, h: viewport.height });
@@ -75,7 +78,7 @@ const PageRenderer: React.FC<PageRendererProps> = ({
 
       // Text layer
       const layer = textLayerRef.current;
-      if (layer && !cancelled && renderCycleRef.current === cycle) {
+      if (layer && page && viewport && !cancelled && renderCycleRef.current === cycle) {
         layer.innerHTML = '';
         layer.style.width = `${viewport.width}px`;
         layer.style.height = `${viewport.height}px`;
