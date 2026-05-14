@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
+import pdfWorkerSrc from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import PDFToolbar from './PDFToolbar';
 import ThumbnailSidebar from './ThumbnailSidebar';
 import BookmarkPanel from './BookmarkPanel';
@@ -18,7 +19,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { Theme } from '@/hooks/useTheme';
 import { Link } from 'react-router-dom';
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerSrc;
 
 interface PDFViewerProps {
   file: File;

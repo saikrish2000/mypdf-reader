@@ -150,7 +150,16 @@ const PageRenderer: React.FC<PageRendererProps> = ({
   };
 
   if (!size) {
-    return <div ref={wrapperRef} className="bg-paper rounded-lg" style={{ width: 600, height: 800 }} />;
+    return (
+      <div
+        ref={wrapperRef}
+        className="relative pdf-paper rounded-lg overflow-hidden mx-auto bg-paper/80"
+        style={{ width: 600, height: 800 }}
+      >
+        <canvas ref={canvasRef} className="absolute inset-0 block w-full h-full bg-white" />
+        <div ref={textLayerRef} className="textLayer absolute inset-0" />
+      </div>
+    );
   }
 
   return (
