@@ -44,17 +44,16 @@ const Auth: React.FC = () => {
     }
   };
 
-  const handleGoogle = async () => {
+  const handleGitHub = async () => {
     setBusy(true);
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
+      provider: 'github',
       options: { redirectTo: `${window.location.origin}/` },
     });
     if (error) {
-      toast.error('Google sign-in failed: ' + error.message);
+      toast.error('GitHub sign-in failed: ' + error.message);
       setBusy(false);
     }
-    // On success Supabase redirects the browser — no navigate() needed
   };
 
   return (
@@ -71,11 +70,11 @@ const Auth: React.FC = () => {
         </p>
 
         <button
-          onClick={handleGoogle}
+          onClick={handleGitHub}
           disabled={busy}
           className="w-full py-2.5 rounded-lg bg-toolbar text-toolbar-foreground hover:opacity-90 transition mb-4 font-medium"
         >
-          Continue with Google
+          Continue with GitHub
         </button>
 
         <div className="relative mb-4">
