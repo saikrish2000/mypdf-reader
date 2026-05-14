@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { lovable } from '@/integrations/lovable';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { BookOpen } from 'lucide-react';
@@ -17,6 +16,9 @@ const Auth: React.FC = () => {
   useEffect(() => {
     if (!loading && user) navigate('/', { replace: true });
   }, [user, loading, navigate]);
+
+  // Show nothing while session is resolving to prevent auth form flash
+  if (loading) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,16 +46,15 @@ const Auth: React.FC = () => {
 
   const handleGoogle = async () => {
     setBusy(true);
-    const result = await lovable.auth.signInWithOAuth('google', {
-      redirect_uri: window.location.origin,
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: `${window.location.origin}/` },
     });
-    if (result.error) {
-      toast.error('Google sign-in failed');
+    if (error) {
+      toast.error('Google sign-in failed: ' + error.message);
       setBusy(false);
-      return;
     }
-    if (result.redirected) return;
-    navigate('/', { replace: true });
+    // On success Supabase redirects the browser — no navigate() needed
   };
 
   return (

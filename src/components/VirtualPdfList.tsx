@@ -16,6 +16,7 @@ interface VirtualPdfListProps {
   onCreateNote: (pageNumber: number, rects: AnnotationRect[], quote: string) => void;
   onDeleteAnnotation: (id: string) => void;
   onUpdateAnnotation: (id: string, patch: Partial<Annotation>) => void;
+  onDefineWord: (word: string, context: string) => void;
 }
 
 const GAP = 24;
@@ -24,7 +25,7 @@ const OVERSCAN_PX = 1600;
 
 const VirtualPdfList: React.FC<VirtualPdfListProps> = ({
   pdfDoc, totalPages, scale, currentPage, onVisiblePageChange, scrollToToken,
-  annotations, canAnnotate, onCreateHighlight, onCreateNote, onDeleteAnnotation, onUpdateAnnotation,
+  annotations, canAnnotate, onCreateHighlight, onCreateNote, onDeleteAnnotation, onUpdateAnnotation, onDefineWord,
 }) => {
   const parentRef = useRef<HTMLDivElement>(null);
   const [heights, setHeights] = useState<number[]>([]);
@@ -163,6 +164,7 @@ const VirtualPdfList: React.FC<VirtualPdfListProps> = ({
               onCreateNote={onCreateNote}
               onDeleteAnnotation={onDeleteAnnotation}
               onUpdateAnnotation={onUpdateAnnotation}
+              onDefineWord={onDefineWord}
             />
           </div>
         )})}

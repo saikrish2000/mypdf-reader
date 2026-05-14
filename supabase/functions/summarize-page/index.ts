@@ -104,7 +104,7 @@ Use plain markdown. Do NOT invent information that is not in the text. If the pa
         );
       }
       const errText = await response.text();
-      console.error("AI gateway error", response.status, errText);
+      console.error("AI gateway error", response.status, errText.replace(/[\r\n]/g, " ").slice(0, 200));
       return new Response(
         JSON.stringify({ error: "AI gateway error" }),
         {

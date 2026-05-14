@@ -3,7 +3,7 @@ import * as pdfjsLib from 'pdfjs-dist';
 import 'pdfjs-dist/web/pdf_viewer.css';
 import type { Annotation, AnnotationRect } from '@/hooks/useAnnotations';
 import { cn } from '@/lib/utils';
-import { Trash2, Palette } from 'lucide-react';
+import { Trash2, BookOpen } from 'lucide-react';
 
 export const HIGHLIGHT_COLORS: Record<string, string> = {
   yellow: 'rgba(250, 204, 21, 0.40)',
@@ -22,11 +22,12 @@ interface PageRendererProps {
   onCreateNote: (pageNumber: number, rects: AnnotationRect[], quote: string) => void;
   onDeleteAnnotation: (id: string) => void;
   onUpdateAnnotation: (id: string, patch: Partial<Annotation>) => void;
+  onDefineWord: (word: string, context: string) => void;
 }
 
 const PageRenderer: React.FC<PageRendererProps> = ({
   pdfDoc, pageNumber, scale, annotations, canAnnotate,
-  onCreateHighlight, onCreateNote, onDeleteAnnotation, onUpdateAnnotation,
+  onCreateHighlight, onCreateNote, onDeleteAnnotation, onUpdateAnnotation, onDefineWord,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const textLayerRef = useRef<HTMLDivElement>(null);
@@ -89,7 +90,7 @@ const PageRenderer: React.FC<PageRendererProps> = ({
       // Text layer
       const layer = textLayerRef.current;
       if (layer && page && viewport && !cancelled && renderCycleRef.current === cycle) {
-        layer.innerHTML = '';
+        while (layer.firstChild) layer.removeChild(layer.firstChild);
         layer.style.width = `${Math.ceil(viewport.width)}px`;
         layer.style.height = `${Math.ceil(viewport.height)}px`;
         try {
@@ -268,6 +269,22 @@ const PageRenderer: React.FC<PageRendererProps> = ({
             className="text-xs px-2 py-1 rounded hover:bg-muted"
             title="Add sticky note"
           >📝</button>
+          {/* Define button — only shown for single-word selections */}
+          {toolbar.quote.trim().split(/\s+/).length === 1 && (
+            <>
+              <div className="w-px h-4 bg-border mx-1" />
+              <button
+                onClick={() => {
+                  onDefineWord(toolbar.quote.trim(), '');
+                  dismissSelection();
+                }}
+                className="flex items-center gap-1 text-xs px-2 py-1 rounded hover:bg-accent/10 text-accent font-medium"
+                title="Define this word"
+              >
+                <BookOpen className="w-3 h-3" /> Define
+              </button>
+            </>
+          )}
         </div>
       )}
     </div>

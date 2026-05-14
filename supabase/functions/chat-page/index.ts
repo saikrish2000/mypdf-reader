@@ -82,7 +82,7 @@ ${truncated || "(no extractable text on this page)"}
         );
       }
       const errText = await upstream.text();
-      console.error("AI gateway error", upstream.status, errText);
+      console.error("AI gateway error", upstream.status, errText.replace(/[\r\n]/g, " ").slice(0, 200));
       return new Response(
         JSON.stringify({ error: "AI gateway error" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },

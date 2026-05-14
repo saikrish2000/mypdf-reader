@@ -16,12 +16,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // onAuthStateChange fires immediately with the current session on mount,
+    // so a separate getSession() call is redundant and causes a race condition.
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
       setSession(s);
-      setLoading(false);
-    });
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
       setLoading(false);
     });
     return () => sub.subscription.unsubscribe();

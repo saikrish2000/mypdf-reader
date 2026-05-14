@@ -18,6 +18,8 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import type { Theme } from '@/hooks/useTheme';
 import { Link } from 'react-router-dom';
+import WordDefinitionPanel from './WordDefinitionPanel';
+import type { WordDefinition } from './WordDefinitionPanel';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerSrc;
 
@@ -64,6 +66,13 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
   const [chatError, setChatError] = useState<string | null>(null);
   const chatAbortRef = useRef<AbortController | null>(null);
   const chatPageRef = useRef<number>(1);
+
+  const [definitionOpen, setDefinitionOpen] = useState(false);
+  const [definitionWord, setDefinitionWord] = useState<string | null>(null);
+  const [definition, setDefinition] = useState<WordDefinition | null>(null);
+  const [definitionLoading, setDefinitionLoading] = useState(false);
+  const [definitionError, setDefinitionError] = useState<string | null>(null);
+  const lastDefinitionWordRef = useRef<string | null>(null);
 
   useEffect(() => { continuousRef.current = continuousRead; }, [continuousRead]);
   useEffect(() => { totalPagesRef.current = totalPages; }, [totalPages]);
@@ -164,9 +173,11 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
     try {
       const pageText = await extractPageText(pageNum);
       const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-page`;
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token ?? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
       const resp = await fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ pageText, pageNumber: pageNum, messages: history }),
         signal: controller.signal,
       });
@@ -273,6 +284,31 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
     create({ page_number: page, type: 'note', color: 'yellow', rects, quote, note_text: '' });
   }, [user, documentId, create]);
 
+  const fetchDefinition = useCallback(async (word: string, context: string) => {
+    setDefinitionOpen(true);
+    setDefinitionWord(word);
+    setDefinitionLoading(true);
+    setDefinitionError(null);
+    setDefinition(null);
+    lastDefinitionWordRef.current = word;
+    try {
+      const { data, error } = await supabase.functions.invoke('define-word', {
+        body: { word, context },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      setDefinition((data as any)?.definition ?? null);
+    } catch (e: any) {
+      setDefinitionError(e?.message || 'Failed to fetch definition');
+    } finally {
+      setDefinitionLoading(false);
+    }
+  }, []);
+
+  const handleDefineWord = useCallback((word: string, context: string) => {
+    fetchDefinition(word, context);
+  }, [fetchDefinition]);
+
   return (
     <div className="flex flex-col h-screen bg-muted animate-fade-in">
       <PDFToolbar
@@ -312,6 +348,16 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
         onRegenerate={() => generateSummary(summaryPage)}
       />
 
+      <WordDefinitionPanel
+        isOpen={definitionOpen}
+        onClose={() => setDefinitionOpen(false)}
+        word={definitionWord}
+        definition={definition}
+        isLoading={definitionLoading}
+        error={definitionError}
+        onRetry={() => lastDefinitionWordRef.current && fetchDefinition(lastDefinitionWordRef.current, '')}
+      />
+
       <ChatPanel
         isOpen={chatOpen} onClose={() => setChatOpen(false)} pageNumber={currentPage}
         messages={chatMessages} isStreaming={chatStreaming} error={chatError}
@@ -342,6 +388,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
             onCreateNote={handleCreateNote}
             onDeleteAnnotation={remove}
             onUpdateAnnotation={update}
+            onDefineWord={handleDefineWord}
           />
         ) : (
           <div className="flex-1 flex items-center justify-center text-muted-foreground">Loading…</div>

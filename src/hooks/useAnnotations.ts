@@ -24,6 +24,7 @@ export function useDocumentId(file: File | null, pageCount: number) {
   const { user } = useAuth();
   const [documentId, setDocumentId] = useState<string | null>(null);
 
+  // Hash + upsert only when file or user changes — NOT on every pageCount tick
   useEffect(() => {
     let cancelled = false;
     const run = async () => {
@@ -39,20 +40,26 @@ export function useDocumentId(file: File | null, pageCount: number) {
       if (existing) {
         setDocumentId(existing.id);
         await supabase.from('documents')
-          .update({ last_opened_at: new Date().toISOString(), file_name: file.name, page_count: pageCount || 0 })
+          .update({ last_opened_at: new Date().toISOString(), file_name: file.name })
           .eq('id', existing.id);
         return;
       }
       const { data: created, error } = await supabase
         .from('documents')
-        .insert({ user_id: user.id, content_hash: hash, file_name: file.name, page_count: pageCount || 0 })
+        .insert({ user_id: user.id, content_hash: hash, file_name: file.name, page_count: 0 })
         .select('id')
         .single();
       if (!error && created && !cancelled) setDocumentId(created.id);
     };
     run();
     return () => { cancelled = true; };
-  }, [file, user, pageCount]);
+  }, [file, user]); // pageCount intentionally excluded
+
+  // Update page_count separately once we know it, without re-hashing
+  useEffect(() => {
+    if (!documentId || !pageCount) return;
+    supabase.from('documents').update({ page_count: pageCount }).eq('id', documentId);
+  }, [documentId, pageCount]);
 
   return documentId;
 }

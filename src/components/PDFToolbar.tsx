@@ -32,6 +32,7 @@ interface PDFToolbarProps {
   summaryOpen: boolean;
   onToggleChat: () => void;
   chatOpen: boolean;
+  onClose: () => void;
 }
 
 const PDFToolbar: React.FC<PDFToolbarProps> = ({
@@ -60,6 +61,7 @@ const PDFToolbar: React.FC<PDFToolbarProps> = ({
   summaryOpen,
   onToggleChat,
   chatOpen,
+  onClose,
 }) => {
   const handlePageInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value, 10);
@@ -240,7 +242,7 @@ const PDFToolbar: React.FC<PDFToolbarProps> = ({
           </button>
           <ThemeToggle theme={theme} onToggle={onToggleTheme} onSelect={onSelectTheme} variant="toolbar" />
           <button
-            onClick={() => window.history.back()}
+            onClick={onClose}
             className="p-2 rounded-lg hover:bg-toolbar-foreground/10 transition-colors"
             title="Close"
           >
