@@ -51,30 +51,35 @@ const PageRenderer: React.FC<PageRendererProps> = ({
         viewport = page.getViewport({ scale });
         if (cancelled || renderCycleRef.current !== cycle) return;
 
-        setSize({ w: viewport.width, h: viewport.height });
+        const cssWidth = Math.ceil(viewport.width);
+        const cssHeight = Math.ceil(viewport.height);
+        setSize({ w: cssWidth, h: cssHeight });
 
         const canvas = canvasRef.current;
         if (!canvas) return;
 
         const outputScale = window.devicePixelRatio || 1;
-        canvas.width = Math.floor(viewport.width * outputScale);
-        canvas.height = Math.floor(viewport.height * outputScale);
-        canvas.style.width = `${viewport.width}px`;
-        canvas.style.height = `${viewport.height}px`;
+        canvas.width = Math.ceil(viewport.width * outputScale);
+        canvas.height = Math.ceil(viewport.height * outputScale);
+        canvas.style.width = `${cssWidth}px`;
+        canvas.style.height = `${cssHeight}px`;
 
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.setTransform(outputScale, 0, 0, outputScale, 0, 0);
-        
-        // Fill with white background first to make PDF visible
+
         ctx.fillStyle = 'white';
-        ctx.fillRect(0, 0, viewport.width, viewport.height);
-        
-        ctx.clearRect(0, 0, viewport.width, viewport.height);
+        ctx.fillRect(0, 0, cssWidth, cssHeight);
 
         if (renderTaskRef.current) renderTaskRef.current.cancel();
-        renderTaskRef.current = page.render({ canvasContext: ctx, viewport });
+        renderTaskRef.current = page.render({
+          canvasContext: ctx,
+          viewport,
+          background: 'rgb(255,255,255)',
+        });
         await renderTaskRef.current.promise;
       } catch (e: any) {
         if (e?.name !== 'RenderingCancelledException') console.error(e);
@@ -85,8 +90,8 @@ const PageRenderer: React.FC<PageRendererProps> = ({
       const layer = textLayerRef.current;
       if (layer && page && viewport && !cancelled && renderCycleRef.current === cycle) {
         layer.innerHTML = '';
-        layer.style.width = `${viewport.width}px`;
-        layer.style.height = `${viewport.height}px`;
+        layer.style.width = `${Math.ceil(viewport.width)}px`;
+        layer.style.height = `${Math.ceil(viewport.height)}px`;
         try {
           const textContent = await page.getTextContent();
           // @ts-ignore - pdfjs has TextLayer in newer versions
