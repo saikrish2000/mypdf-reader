@@ -100,11 +100,15 @@ const VirtualPdfList: React.FC<VirtualPdfListProps> = ({
     };
   }, [pageOffsets, scrollTop, totalPages, viewportHeight]);
 
-  // External jump
+  // External jump — only when scrollToToken changes (not on user scroll)
+  const lastJumpTokenRef = useRef<number>(scrollToToken);
   useEffect(() => {
-    if (scrollToToken < 0) return;
-    parentRef.current?.scrollTo({ top: pageOffsets[currentPage - 1] ?? 0, behavior: 'smooth' });
-  }, [currentPage, pageOffsets, scrollToToken]);
+    if (scrollToToken === lastJumpTokenRef.current) return;
+    lastJumpTokenRef.current = scrollToToken;
+    const target = pageOffsets[currentPage - 1];
+    if (target === undefined) return;
+    parentRef.current?.scrollTo({ top: target, behavior: 'smooth' });
+  }, [scrollToToken, currentPage, pageOffsets]);
 
   // Track visible page
   useEffect(() => {
