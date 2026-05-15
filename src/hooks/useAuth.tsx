@@ -16,8 +16,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // onAuthStateChange fires immediately with the current session on mount,
-    // so a separate getSession() call is redundant and causes a race condition.
+    // Get the current session first, then subscribe to future changes.
+    // This is the correct pattern for Supabase v2 — onAuthStateChange alone
+    // does NOT fire synchronously on mount, so loading would stay true forever.
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setLoading(false);
+    });
+
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
       setSession(s);
       setLoading(false);

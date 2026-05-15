@@ -10,14 +10,12 @@ import PlaybackControls from './PlaybackControls';
 import VirtualPdfList from './VirtualPdfList';
 import { usePDFStorage } from '@/hooks/usePDFStorage';
 import { useSpeech } from '@/hooks/useSpeech';
-import { useAuth } from '@/hooks/useAuth';
 import { useAnnotations, useDocumentId, type AnnotationRect } from '@/hooks/useAnnotations';
 import { cachePDF } from '@/lib/pdfCache';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import type { Theme } from '@/hooks/useTheme';
-import { Link } from 'react-router-dom';
 import WordDefinitionPanel from './WordDefinitionPanel';
 import type { WordDefinition } from './WordDefinitionPanel';
 
@@ -32,7 +30,6 @@ interface PDFViewerProps {
 }
 
 const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleTheme, onSelectTheme }) => {
-  const { user } = useAuth();
   const [pdfDoc, setPdfDoc] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
@@ -273,16 +270,14 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
 
   // Annotation handlers
   const handleCreateHighlight = useCallback((page: number, color: string, rects: AnnotationRect[], quote: string) => {
-    if (!user) { toast.error('Sign in to highlight'); return; }
-    if (!documentId) { toast.error('Saving annotation… try again in a moment'); return; }
+    if (!documentId) return;
     create({ page_number: page, type: 'highlight', color, rects, quote, note_text: null });
-  }, [user, documentId, create]);
+  }, [documentId, create]);
 
   const handleCreateNote = useCallback((page: number, rects: AnnotationRect[], quote: string) => {
-    if (!user) { toast.error('Sign in to add notes'); return; }
-    if (!documentId) { toast.error('Saving annotation… try again in a moment'); return; }
+    if (!documentId) return;
     create({ page_number: page, type: 'note', color: 'yellow', rects, quote, note_text: '' });
-  }, [user, documentId, create]);
+  }, [documentId, create]);
 
   const fetchDefinition = useCallback(async (word: string, context: string) => {
     setDefinitionOpen(true);
@@ -323,13 +318,8 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
         continuousRead={continuousRead} onContinuousChange={setContinuousRead}
         onSummarize={handleSummarize} summaryOpen={summaryOpen}
         onToggleChat={() => setChatOpen(p => !p)} chatOpen={chatOpen}
+        onClose={onClose}
       />
-
-      {!user && (
-        <div className="bg-accent/10 border-b border-accent/20 px-4 py-2 text-sm text-center text-foreground">
-          <Link to="/auth" className="font-medium text-accent hover:underline">Sign in</Link> to save highlights and notes across devices.
-        </div>
-      )}
 
       <ThumbnailSidebar
         pdfDoc={pdfDoc} currentPage={currentPage} totalPages={totalPages}
@@ -383,7 +373,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
             onVisiblePageChange={setCurrentPage}
             scrollToToken={scrollToken}
             annotations={annotations}
-            canAnnotate={!!user}
+            canAnnotate={true}
             onCreateHighlight={handleCreateHighlight}
             onCreateNote={handleCreateNote}
             onDeleteAnnotation={remove}

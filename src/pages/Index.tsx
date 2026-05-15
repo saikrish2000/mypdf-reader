@@ -1,14 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
 import PDFUpload from '@/components/PDFUpload';
 import PDFViewer from '@/components/PDFViewer';
 import RecentFiles from '@/components/RecentFiles';
 import ThemeToggle from '@/components/ThemeToggle';
 import { usePDFStorage } from '@/hooks/usePDFStorage';
 import { useTheme } from '@/hooks/useTheme';
-import { useAuth } from '@/hooks/useAuth';
 import { getCachedPDF } from '@/lib/pdfCache';
-import { BookOpen, LogOut } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 import { toast } from 'sonner';
 
 const Index = () => {
@@ -17,7 +15,6 @@ const Index = () => {
   const { getRecentFiles } = usePDFStorage();
   const [recentFiles, setRecentFiles] = useState<ReturnType<typeof getRecentFiles>>([]);
   const { theme, toggleTheme, setTheme } = useTheme();
-  const { user, signOut } = useAuth();
 
   useEffect(() => {
     setRecentFiles(getRecentFiles());
@@ -62,23 +59,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background transition-colors duration-300">
       {/* Top-right controls */}
-      <div className="fixed top-4 right-4 z-10 flex items-center gap-2">
-        {user ? (
-          <button
-            onClick={() => signOut()}
-            className="px-3 py-2 text-sm rounded-lg bg-card border border-border hover:bg-muted flex items-center gap-1.5"
-            title={user.email ?? 'Sign out'}
-          >
-            <LogOut className="w-4 h-4" /> Sign out
-          </button>
-        ) : (
-          <Link
-            to="/auth"
-            className="px-3 py-2 text-sm rounded-lg bg-accent text-accent-foreground hover:opacity-90 font-medium"
-          >
-            Sign in
-          </Link>
-        )}
+      <div className="fixed top-4 right-4 z-10">
         <ThemeToggle theme={theme} onToggle={toggleTheme} onSelect={setTheme} />
       </div>
 
