@@ -16,6 +16,7 @@ import { useAnnotations, useDocumentId, type AnnotationRect } from '@/hooks/useA
 import { useFullTextSearch } from '@/hooks/useFullTextSearch';
 import SearchPanel from './SearchPanel';
 import { useReadingStats } from '@/hooks/useReadingStats';
+import { useSyncedBookmarks } from '@/hooks/useSyncedBookmarks';
 import { cachePDF } from '@/lib/pdfCache';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
