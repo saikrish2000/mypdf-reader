@@ -273,11 +273,20 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl/Cmd+F → open search (works even inside inputs)
+      if (e.key === 'f' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        setSearchOpen(true);
+        return;
+      }
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA') return;
       if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); handlePageChange(currentPage - 1); }
       else if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); handlePageChange(currentPage + 1); }
-      else if (e.key === 'Escape') onClose();
+      else if (e.key === 'Escape') {
+        if (searchOpen) setSearchOpen(false);
+        else onClose();
+      }
       else if (e.key === 'b' && (e.ctrlKey || e.metaKey)) {
         e.preventDefault();
         if (!currentPageBookmarked) handleAddBookmark(`Page ${currentPage}`);
@@ -286,7 +295,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentPage, handlePageChange, onClose, currentPageBookmarked, handleAddBookmark, handleRemoveBookmark]);
+  }, [currentPage, handlePageChange, onClose, currentPageBookmarked, handleAddBookmark, handleRemoveBookmark, searchOpen]);
 
   // Annotation handlers
   const handleCreateHighlight = useCallback((page: number, color: string, rects: AnnotationRect[], quote: string) => {
