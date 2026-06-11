@@ -73,6 +73,16 @@ const Index = () => {
         >
           <TrendingUp className="w-4 h-4 text-foreground" />
         </button>
+        {user ? (
+          <button
+            onClick={() => signOut()}
+            className="p-2 rounded-lg bg-card border border-border hover:bg-muted transition-colors"
+            title={`Signed in as ${user.email ?? 'user'} — click to sign out`}
+            aria-label="Sign out"
+          >
+            <LogOut className="w-4 h-4 text-foreground" />
+          </button>
+        ) : null}
         <ThemeToggle theme={theme} onToggle={toggleTheme} onSelect={setTheme} />
       </div>
 
@@ -92,6 +102,28 @@ const Index = () => {
             Pick up right where you left off.
           </p>
         </div>
+
+        {/* Cloud sync banner */}
+        {!user && (
+          <div className="mb-6 rounded-xl border border-accent/30 bg-accent/5 p-4 flex items-center gap-3">
+            <div className="shrink-0 w-9 h-9 rounded-lg bg-accent/15 flex items-center justify-center">
+              <Cloud className="w-4 h-4 text-accent" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground">Sync across devices</p>
+              <p className="text-xs text-muted-foreground">
+                Sign in to back up bookmarks and highlights to the cloud.
+              </p>
+            </div>
+            <Link
+              to="/auth"
+              className="shrink-0 text-xs font-medium px-3 py-1.5 rounded-lg bg-accent text-accent-foreground hover:opacity-90 transition-opacity"
+            >
+              Sign in
+            </Link>
+          </div>
+        )}
+
 
         {/* Upload area */}
         <PDFUpload
