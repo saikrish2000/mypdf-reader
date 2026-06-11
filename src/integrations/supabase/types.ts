@@ -64,6 +64,44 @@ export type Database = {
           },
         ]
       }
+      bookmarks: {
+        Row: {
+          color: string
+          created_at: string
+          document_id: string
+          id: string
+          label: string
+          page_number: number
+          user_id: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          document_id: string
+          id?: string
+          label?: string
+          page_number: number
+          user_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          document_id?: string
+          id?: string
+          label?: string
+          page_number?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookmarks_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documents: {
         Row: {
           content_hash: string
