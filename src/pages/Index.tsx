@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import PDFUpload from '@/components/PDFUpload';
 import PDFViewer from '@/components/PDFViewer';
 import RecentFiles from '@/components/RecentFiles';
@@ -6,8 +7,9 @@ import ThemeToggle from '@/components/ThemeToggle';
 import StatsPanel from '@/components/StatsPanel';
 import { usePDFStorage } from '@/hooks/usePDFStorage';
 import { useTheme } from '@/hooks/useTheme';
+import { useAuth } from '@/hooks/useAuth';
 import { getCachedPDF } from '@/lib/pdfCache';
-import { BookOpen, TrendingUp } from 'lucide-react';
+import { BookOpen, TrendingUp, Cloud, LogOut } from 'lucide-react';
 import { toast } from 'sonner';
 
 const Index = () => {
