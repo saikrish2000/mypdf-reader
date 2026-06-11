@@ -13,6 +13,8 @@ import { usePDFStorage } from '@/hooks/usePDFStorage';
 import { useSpeech } from '@/hooks/useSpeech';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAnnotations, useDocumentId, type AnnotationRect } from '@/hooks/useAnnotations';
+import { useFullTextSearch } from '@/hooks/useFullTextSearch';
+import SearchPanel from './SearchPanel';
 import { cachePDF } from '@/lib/pdfCache';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
