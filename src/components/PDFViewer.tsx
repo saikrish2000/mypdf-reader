@@ -49,8 +49,15 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
   const [searchOpen, setSearchOpen] = useState(false);
   const isMobile = useIsMobile();
 
-  const { saveProgress, loadProgress, getBookmarks, addBookmark, removeBookmark, isBookmarked } = usePDFStorage();
+  const { saveProgress, loadProgress } = usePDFStorage();
   const documentId = useDocumentId(file, totalPages);
+  const {
+    bookmarks,
+    isBookmarked: isBookmarkedFn,
+    addBookmark: addBookmarkCloud,
+    removeBookmark: removeBookmarkCloud,
+    syncState,
+  } = useSyncedBookmarks(file.name, documentId);
   const { annotations, create, update, remove } = useAnnotations(documentId);
   const { search: ftSearch, indexState } = useFullTextSearch(pdfDoc);
   const { recordPageVisit } = useReadingStats(file.name);
