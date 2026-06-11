@@ -140,14 +140,14 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
   }, [totalPages]);
 
   const handleAddBookmark = useCallback((label: string) => {
-    addBookmark(file.name, currentPage, label);
+    addBookmarkCloud(currentPage, label);
     setBookmarkVersion(v => v + 1);
-  }, [addBookmark, file.name, currentPage]);
+  }, [addBookmarkCloud, currentPage]);
 
   const handleRemoveBookmark = useCallback((page: number) => {
-    removeBookmark(file.name, page);
+    removeBookmarkCloud(page);
     setBookmarkVersion(v => v + 1);
-  }, [removeBookmark, file.name]);
+  }, [removeBookmarkCloud]);
 
   const extractPageText = useCallback(async (pageNum: number): Promise<string> => {
     if (!pdfDoc) return '';
