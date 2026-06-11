@@ -51,6 +51,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
   const { saveProgress, loadProgress, getBookmarks, addBookmark, removeBookmark, isBookmarked } = usePDFStorage();
   const documentId = useDocumentId(file, totalPages);
   const { annotations, create, update, remove } = useAnnotations(documentId);
+  const { search: ftSearch, indexState } = useFullTextSearch(pdfDoc);
   const {
     voices, settings: speechSettings, setSettings: setSpeechSettings,
     speak, stop: stopSpeak, pause: pauseSpeak, resume: resumeSpeak,
