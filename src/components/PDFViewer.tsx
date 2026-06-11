@@ -377,6 +377,42 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
         onStop={stopSpeak} onSkipBack={skipBackward} onSkipForward={skipForward}
       />
 
+      {/* Mobile backdrop for open side panels */}
+      {isMobile && (sidebarOpen || bookmarksOpen) && (
+        <button
+          aria-label="Close panels"
+          onClick={() => { setSidebarOpen(false); setBookmarksOpen(false); }}
+          className="fixed inset-0 z-30 bg-black/40 sm:hidden animate-fade-in"
+        />
+      )}
+
+      {/* Mobile floating zoom controls */}
+      {isMobile && pdfDoc && (
+        <div className="fixed bottom-4 right-4 z-30 flex flex-col gap-2 md:hidden">
+          <button
+            onClick={() => setScale(s => Math.min(3, s + 0.2))}
+            disabled={scale >= 3}
+            className="p-3 rounded-full bg-toolbar text-toolbar-foreground shadow-lg disabled:opacity-40"
+            title="Zoom in"
+            aria-label="Zoom in"
+          >
+            <ZoomIn className="w-5 h-5" />
+          </button>
+          <div className="text-[10px] text-center text-toolbar-foreground/80 bg-toolbar/80 rounded-full px-2 py-0.5 shadow">
+            {Math.round(scale * 100)}%
+          </div>
+          <button
+            onClick={() => setScale(s => Math.max(0.4, s - 0.2))}
+            disabled={scale <= 0.4}
+            className="p-3 rounded-full bg-toolbar text-toolbar-foreground shadow-lg disabled:opacity-40"
+            title="Zoom out"
+            aria-label="Zoom out"
+          >
+            <ZoomOut className="w-5 h-5" />
+          </button>
+        </div>
+      )}
+
       <div className={cn(
         "flex-1 flex flex-col min-h-0 transition-all duration-300",
         sidebarOpen && "sm:pl-52",
