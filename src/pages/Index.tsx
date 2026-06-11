@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import PDFUpload from '@/components/PDFUpload';
 import PDFViewer from '@/components/PDFViewer';
 import RecentFiles from '@/components/RecentFiles';
 import ThemeToggle from '@/components/ThemeToggle';
+import StatsPanel from '@/components/StatsPanel';
 import { usePDFStorage } from '@/hooks/usePDFStorage';
 import { useTheme } from '@/hooks/useTheme';
+import { useAuth } from '@/hooks/useAuth';
 import { getCachedPDF } from '@/lib/pdfCache';
-import { BookOpen } from 'lucide-react';
+import { BookOpen, TrendingUp, Cloud, LogOut } from 'lucide-react';
 import { toast } from 'sonner';
 
 const Index = () => {
@@ -15,6 +18,8 @@ const Index = () => {
   const { getRecentFiles } = usePDFStorage();
   const [recentFiles, setRecentFiles] = useState<ReturnType<typeof getRecentFiles>>([]);
   const { theme, toggleTheme, setTheme } = useTheme();
+  const { user, signOut } = useAuth();
+  const [statsOpen, setStatsOpen] = useState(false);
 
   useEffect(() => {
     setRecentFiles(getRecentFiles());
@@ -59,9 +64,29 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background transition-colors duration-300">
       {/* Top-right controls */}
-      <div className="fixed top-4 right-4 z-10">
+      <div className="fixed top-4 right-4 z-10 flex items-center gap-2">
+        <button
+          onClick={() => setStatsOpen(true)}
+          className="p-2 rounded-lg bg-card border border-border hover:bg-muted transition-colors"
+          title="Reading stats"
+          aria-label="Reading stats"
+        >
+          <TrendingUp className="w-4 h-4 text-foreground" />
+        </button>
+        {user ? (
+          <button
+            onClick={() => signOut()}
+            className="p-2 rounded-lg bg-card border border-border hover:bg-muted transition-colors"
+            title={`Signed in as ${user.email ?? 'user'} — click to sign out`}
+            aria-label="Sign out"
+          >
+            <LogOut className="w-4 h-4 text-foreground" />
+          </button>
+        ) : null}
         <ThemeToggle theme={theme} onToggle={toggleTheme} onSelect={setTheme} />
       </div>
+
+      <StatsPanel isOpen={statsOpen} onClose={() => setStatsOpen(false)} />
 
       <div className="container max-w-4xl mx-auto px-4 py-12 sm:py-20">
         {/* Header */}
@@ -77,6 +102,28 @@ const Index = () => {
             Pick up right where you left off.
           </p>
         </div>
+
+        {/* Cloud sync banner */}
+        {!user && (
+          <div className="mb-6 rounded-xl border border-accent/30 bg-accent/5 p-4 flex items-center gap-3">
+            <div className="shrink-0 w-9 h-9 rounded-lg bg-accent/15 flex items-center justify-center">
+              <Cloud className="w-4 h-4 text-accent" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground">Sync across devices</p>
+              <p className="text-xs text-muted-foreground">
+                Sign in to back up bookmarks and highlights to the cloud.
+              </p>
+            </div>
+            <Link
+              to="/auth"
+              className="shrink-0 text-xs font-medium px-3 py-1.5 rounded-lg bg-accent text-accent-foreground hover:opacity-90 transition-opacity"
+            >
+              Sign in
+            </Link>
+          </div>
+        )}
+
 
         {/* Upload area */}
         <PDFUpload

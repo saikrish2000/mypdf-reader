@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
 import pdfWorkerSrc from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+import { ZoomIn, ZoomOut } from 'lucide-react';
 import PDFToolbar from './PDFToolbar';
 import ThumbnailSidebar from './ThumbnailSidebar';
 import BookmarkPanel from './BookmarkPanel';
@@ -10,7 +11,12 @@ import PlaybackControls from './PlaybackControls';
 import VirtualPdfList from './VirtualPdfList';
 import { usePDFStorage } from '@/hooks/usePDFStorage';
 import { useSpeech } from '@/hooks/useSpeech';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { useAnnotations, useDocumentId, type AnnotationRect } from '@/hooks/useAnnotations';
+import { useFullTextSearch } from '@/hooks/useFullTextSearch';
+import SearchPanel from './SearchPanel';
+import { useReadingStats } from '@/hooks/useReadingStats';
+import { useSyncedBookmarks } from '@/hooks/useSyncedBookmarks';
 import { cachePDF } from '@/lib/pdfCache';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -41,10 +47,26 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [bookmarksOpen, setBookmarksOpen] = useState(false);
   const [bookmarkVersion, setBookmarkVersion] = useState(0);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const isMobile = useIsMobile();
 
-  const { saveProgress, loadProgress, getBookmarks, addBookmark, removeBookmark, isBookmarked } = usePDFStorage();
+  const { saveProgress, loadProgress } = usePDFStorage();
   const documentId = useDocumentId(file, totalPages);
+  const {
+    bookmarks,
+    isBookmarked: isBookmarkedFn,
+    addBookmark: addBookmarkCloud,
+    removeBookmark: removeBookmarkCloud,
+    syncState,
+  } = useSyncedBookmarks(file.name, documentId);
   const { annotations, create, update, remove } = useAnnotations(documentId);
+  const { search: ftSearch, indexState } = useFullTextSearch(pdfDoc);
+  const { recordPageVisit } = useReadingStats(file.name);
+
+  // Record each page the user lands on
+  useEffect(() => {
+    if (totalPages > 0) recordPageVisit(currentPage);
+  }, [currentPage, totalPages, recordPageVisit]);
   const {
     voices, settings: speechSettings, setSettings: setSpeechSettings,
     speak, stop: stopSpeak, pause: pauseSpeak, resume: resumeSpeak,
@@ -74,8 +96,8 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
   useEffect(() => { continuousRef.current = continuousRead; }, [continuousRead]);
   useEffect(() => { totalPagesRef.current = totalPages; }, [totalPages]);
 
-  const bookmarks = getBookmarks(file.name);
-  const currentPageBookmarked = isBookmarked(file.name, currentPage);
+  const currentPageBookmarked = isBookmarkedFn(currentPage);
+
 
   useEffect(() => {
     const loadPDF = async () => {
@@ -85,6 +107,19 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
         setPdfDoc(pdf);
         setTotalPages(pdf.numPages);
         cachePDF(file.name, file);
+
+        // Fit-to-width on first load (especially helpful on mobile)
+        try {
+          const firstPage = await pdf.getPage(1);
+          const baseViewport = firstPage.getViewport({ scale: 1 });
+          // Available width = window width - 2 * padding (p-4 = 16px each side, p-8 = 32px on sm+)
+          const isMobile = window.innerWidth < 640;
+          const padding = isMobile ? 32 : 64;
+          const available = Math.max(280, window.innerWidth - padding);
+          const fitScale = Math.min(2, Math.max(0.5, available / baseViewport.width));
+          setScale(Number(fitScale.toFixed(2)));
+        } catch {}
+
         const saved = loadProgress(file.name);
         if (saved && saved.currentPage <= pdf.numPages) {
           setCurrentPage(saved.currentPage);
@@ -105,14 +140,14 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
   }, [totalPages]);
 
   const handleAddBookmark = useCallback((label: string) => {
-    addBookmark(file.name, currentPage, label);
+    addBookmarkCloud(currentPage, label);
     setBookmarkVersion(v => v + 1);
-  }, [addBookmark, file.name, currentPage]);
+  }, [addBookmarkCloud, currentPage]);
 
   const handleRemoveBookmark = useCallback((page: number) => {
-    removeBookmark(file.name, page);
+    removeBookmarkCloud(page);
     setBookmarkVersion(v => v + 1);
-  }, [removeBookmark, file.name]);
+  }, [removeBookmarkCloud]);
 
   const extractPageText = useCallback(async (pageNum: number): Promise<string> => {
     if (!pdfDoc) return '';
@@ -253,11 +288,20 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl/Cmd+F → open search (works even inside inputs)
+      if (e.key === 'f' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        setSearchOpen(true);
+        return;
+      }
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA') return;
       if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); handlePageChange(currentPage - 1); }
       else if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); handlePageChange(currentPage + 1); }
-      else if (e.key === 'Escape') onClose();
+      else if (e.key === 'Escape') {
+        if (searchOpen) setSearchOpen(false);
+        else onClose();
+      }
       else if (e.key === 'b' && (e.ctrlKey || e.metaKey)) {
         e.preventDefault();
         if (!currentPageBookmarked) handleAddBookmark(`Page ${currentPage}`);
@@ -266,7 +310,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentPage, handlePageChange, onClose, currentPageBookmarked, handleAddBookmark, handleRemoveBookmark]);
+  }, [currentPage, handlePageChange, onClose, currentPageBookmarked, handleAddBookmark, handleRemoveBookmark, searchOpen]);
 
   // Annotation handlers
   const handleCreateHighlight = useCallback((page: number, color: string, rects: AnnotationRect[], quote: string) => {
@@ -318,6 +362,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
         continuousRead={continuousRead} onContinuousChange={setContinuousRead}
         onSummarize={handleSummarize} summaryOpen={summaryOpen}
         onToggleChat={() => setChatOpen(p => !p)} chatOpen={chatOpen}
+        onToggleSearch={() => setSearchOpen(p => !p)} searchOpen={searchOpen}
         onClose={onClose}
       />
 
@@ -354,12 +399,57 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
         onSend={handleChatSend} onRetry={handleChatRetry} onClear={handleChatClear}
       />
 
+      <SearchPanel
+        isOpen={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        onSearch={ftSearch}
+        indexReady={indexState.ready}
+        indexProgress={indexState.progress}
+        onJumpToPage={(p) => { handlePageChange(p); if (isMobile) setSearchOpen(false); }}
+      />
+
       <PlaybackControls
         visible={isSpeaking} isPlaying={isSpeaking} isPaused={isPaused}
         currentPage={currentPage} totalPages={totalPages} rate={speechSettings.rate}
         onPlayPause={() => (isPaused ? resumeSpeak() : pauseSpeak())}
         onStop={stopSpeak} onSkipBack={skipBackward} onSkipForward={skipForward}
       />
+
+      {/* Mobile backdrop for open side panels */}
+      {isMobile && (sidebarOpen || bookmarksOpen) && (
+        <button
+          aria-label="Close panels"
+          onClick={() => { setSidebarOpen(false); setBookmarksOpen(false); }}
+          className="fixed inset-0 z-30 bg-black/40 sm:hidden animate-fade-in"
+        />
+      )}
+
+      {/* Mobile floating zoom controls */}
+      {isMobile && pdfDoc && (
+        <div className="fixed bottom-4 right-4 z-30 flex flex-col gap-2 md:hidden">
+          <button
+            onClick={() => setScale(s => Math.min(3, s + 0.2))}
+            disabled={scale >= 3}
+            className="p-3 rounded-full bg-toolbar text-toolbar-foreground shadow-lg disabled:opacity-40"
+            title="Zoom in"
+            aria-label="Zoom in"
+          >
+            <ZoomIn className="w-5 h-5" />
+          </button>
+          <div className="text-[10px] text-center text-toolbar-foreground/80 bg-toolbar/80 rounded-full px-2 py-0.5 shadow">
+            {Math.round(scale * 100)}%
+          </div>
+          <button
+            onClick={() => setScale(s => Math.max(0.4, s - 0.2))}
+            disabled={scale <= 0.4}
+            className="p-3 rounded-full bg-toolbar text-toolbar-foreground shadow-lg disabled:opacity-40"
+            title="Zoom out"
+            aria-label="Zoom out"
+          >
+            <ZoomOut className="w-5 h-5" />
+          </button>
+        </div>
+      )}
 
       <div className={cn(
         "flex-1 flex flex-col min-h-0 transition-all duration-300",
