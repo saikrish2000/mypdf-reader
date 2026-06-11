@@ -384,6 +384,15 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
         onSend={handleChatSend} onRetry={handleChatRetry} onClear={handleChatClear}
       />
 
+      <SearchPanel
+        isOpen={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        onSearch={ftSearch}
+        indexReady={indexState.ready}
+        indexProgress={indexState.progress}
+        onJumpToPage={(p) => { handlePageChange(p); if (isMobile) setSearchOpen(false); }}
+      />
+
       <PlaybackControls
         visible={isSpeaking} isPlaying={isSpeaking} isPaused={isPaused}
         currentPage={currentPage} totalPages={totalPages} rate={speechSettings.rate}
