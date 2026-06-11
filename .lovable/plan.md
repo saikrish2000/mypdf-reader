@@ -1,71 +1,110 @@
-# Annotations, Cloud Sync & Virtualization
+# Enhancement Plan
 
-Three connected features. Shipping in one pass since annotations require auth + DB, and virtualization touches the same `PDFViewer` we'd otherwise rewrite twice.
+Four selected scopes, shipped as four phases. Each phase is independently usable so you can stop or reprioritize between them.
 
-## 1. Auth (prerequisite for cloud annotations)
+---
 
-- Email/password + Google sign-in (Lovable Cloud defaults).
-- New `/auth` route with sign-in / sign-up tabs and a `/reset-password` page.
-- Header shows user avatar + sign-out; PDF viewer works signed-out but **annotations are gated** (selecting text shows "Sign in to highlight").
-- No `profiles` table needed — we don't store display names beyond what `auth.users` already has. (Tell me if you want avatars/usernames and I'll add one.)
+## Phase 1 — Mobile Responsive (ship first)
 
-## 2. Database
+Highest impact, no backend work. Makes the app actually usable on phones.
 
-Document identity = SHA-256 of file bytes, so the same PDF reopened later (even renamed) loads the same annotations.
+**Toolbar (`PDFToolbar.tsx`)**
+- Detect mobile via existing `useIsMobile` hook.
+- On mobile: collapse non-essential controls into a hamburger sheet (Sheet from shadcn). Keep page nav + page indicator + close inline.
+- Larger 44px tap targets, icon-only on small screens.
 
+**Side panels → bottom sheets on mobile**
+- `ThumbnailSidebar`, `BookmarkPanel`, `ChatPanel`, `SummaryPanel`, `WordDefinitionPanel` already use Sheet; switch `side="right"` to `side="bottom"` when `isMobile` and cap height at 85vh.
+
+**Viewer gestures (`VirtualPdfList` + `PageRenderer`)**
+- Pinch-to-zoom: native CSS `touch-action: pan-y pinch-zoom` on the canvas wrapper + a JS pinch listener that updates `scale` (debounced).
+- Double-tap to toggle fit-width ↔ 200%.
+- Swipe left/right at viewport edges to flip page (only when zoomed at fit-width).
+
+**Default scale**
+- On first open on mobile, auto-compute scale so page width = container width (fit-to-width). Already partially handled; add explicit `useEffect` on mount + resize.
+
+**Misc**
+- Read-aloud controls dock to bottom on mobile.
+- `Index.tsx` upload area: stack vertically, larger drop zone.
+
+---
+
+## Phase 2 — Full-text Search
+
+Pure frontend, uses PDF.js's `getTextContent` (already loaded).
+
+- New `useFullTextSearch(pdfDoc)` hook: extracts text per page lazily, caches in a Map, exposes `search(query)` returning `{page, snippet, matchIndex}[]`.
+- New `SearchPanel` component (Sheet, opens from toolbar search icon): input + result list with snippets and page numbers; click jumps to page.
+- Highlight matches: pass `searchQuery` to `PageRenderer`; after text layer renders, wrap matches in `<mark>` (CSS class with accent background).
+- Keyboard: `Ctrl/Cmd+F` opens search; `Enter`/`Shift+Enter` next/prev.
+
+---
+
+## Phase 3 — Reading Stats + Streaks
+
+LocalStorage-based (no backend dependency), shown in a stats panel.
+
+**New `useReadingStats` hook**
+- Track per-document: `totalSecondsRead`, `pagesRead` (Set), `sessions[]` (date + duration), `lastReadDate`.
+- Track global: `dailyMinutes` (Map<YYYY-MM-DD, minutes>), `currentStreak`, `longestStreak`.
+- Timer: increments while tab is visible AND user is interacting (scroll/click in last 60s). Pause on `visibilitychange`.
+
+**New `StatsPanel` component**
+- Triggered from toolbar (BarChart icon) or `Index.tsx`.
+- Shows: today's minutes, current streak (🔥), longest streak, last 30 days heatmap (simple grid), per-document progress bars, top 5 most-read documents.
+
+---
+
+## Phase 4 — Cloud Sync (bookmarks + annotations)
+
+Annotations table already exists. Add bookmarks table + auth gate.
+
+**Auth**
+- `Auth.tsx` and `useAuth` already exist. Add a "Sign in to sync" banner in `Index.tsx`; sync is optional.
+
+**Schema migration**
+```sql
+CREATE TABLE public.bookmarks (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  document_id uuid NOT NULL REFERENCES public.documents(id) ON DELETE CASCADE,
+  page_number int NOT NULL,
+  label text,
+  color text NOT NULL DEFAULT 'amber',
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.bookmarks TO authenticated;
+GRANT ALL ON public.bookmarks TO service_role;
+ALTER TABLE public.bookmarks ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users manage own bookmarks" ON public.bookmarks
+  FOR ALL TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 ```
-documents         id, user_id, content_hash (unique per user), file_name, page_count, last_opened_at
-annotations       id, user_id, document_id, page_number, type ('highlight'|'note'),
-                  color, rects (jsonb: [{x,y,w,h}] in PDF user-space units),
-                  quote (selected text), note_text (nullable), created_at, updated_at
-```
 
-RLS: each user can only CRUD their own rows. Indexes on `(document_id, page_number)`.
+**Sync strategy (last-write-wins, simple)**
+- New `useCloudSync(documentId)` hook: when authed, on document open it
+  1. Upserts a `documents` row keyed by `content_hash`.
+  2. Pulls remote bookmarks + annotations.
+  3. Merges with localStorage (remote wins on conflict by `updated_at`).
+  4. Subscribes to realtime changes for live multi-device updates.
+- Local writes mirror to cloud in background; failures queued in localStorage and retried on reconnect.
+- Reading stats stay local for now (can add later if you want).
 
-## 3. Text-layer overlay & annotation UI
+**UI**
+- Small cloud icon in toolbar: grey (offline), blue (synced), spinner (syncing), red (error with retry).
 
-- Render PDF.js text layer absolutely positioned over the canvas (same scale/viewport).
-- On `mouseup` inside the text layer with a non-empty selection → floating toolbar (4 highlight colors + 📝 sticky note).
-- Highlights: store `rects` from `Range.getClientRects()` converted to PDF units; render as colored translucent boxes under the text layer.
-- Sticky notes: small pin icon at the selection's start; click opens a popover with a textarea (autosaves on blur).
-- Right-click an existing annotation → delete / change color / edit note.
-- All writes go through `useAnnotations(documentId)` hook with optimistic updates and Realtime subscription so a second tab stays in sync.
+---
 
-## 4. Page virtualization
+## Technical notes (skip if not interested)
 
-Replace single-canvas viewer with a virtualized vertical list:
+- No new heavy deps. Pinch zoom uses native pointer events; no `hammerjs`.
+- Search highlight uses existing text layer DOM (already rendered for selection), so no extra render pass.
+- Stats panel uses a simple CSS grid heatmap, no chart lib.
+- Realtime requires `ALTER PUBLICATION supabase_realtime ADD TABLE` for `annotations` and `bookmarks` — included in Phase 4 migration.
+- Each phase ends with a typecheck (`bunx tsc --noEmit`) and a quick manual smoke in the preview.
 
-- Compute each page's display height up-front from `page.getViewport({scale})` (cheap — no render).
-- Use `@tanstack/react-virtual` to mount only pages whose placeholders intersect (or are within ~2 pages of) the viewport.
-- Each visible page is a `<PageRenderer>` that renders canvas + text layer + annotation layer; off-screen pages show a sized skeleton so scrollbar length stays correct.
-- `currentPage` is derived from which page occupies the most viewport (IntersectionObserver), keeping toolbar/bookmarks/chat behavior unchanged.
-- Scroll-to-page (bookmarks, thumbnails, page input) uses the virtualizer's `scrollToIndex`.
-- 3D page-flip animation only fires on explicit prev/next clicks, not on scroll, so virtualization stays smooth.
+---
 
-## 5. Files
+## Order
 
-```text
-new   src/pages/Auth.tsx
-new   src/pages/ResetPassword.tsx
-new   src/hooks/useAuth.tsx              # session + listener
-new   src/hooks/useAnnotations.ts        # fetch/create/update/delete + realtime
-new   src/lib/documentHash.ts            # SHA-256 of file
-new   src/components/AnnotationLayer.tsx
-new   src/components/TextLayer.tsx
-new   src/components/SelectionToolbar.tsx
-new   src/components/StickyNotePopover.tsx
-new   src/components/PageRenderer.tsx    # canvas + text + annotation layers for one page
-new   src/components/VirtualPdfList.tsx  # tanstack-virtual list
-edit  src/components/PDFViewer.tsx       # swap single-canvas for VirtualPdfList, gate annotations
-edit  src/App.tsx                         # /auth, /reset-password routes
-edit  src/pages/Index.tsx                 # show sign-in CTA in header
-new   supabase migration                  # documents + annotations tables, RLS, indexes, updated_at trigger
-```
-
-## 6. Out of scope (next milestone)
-
-- Shared read-only links (next feature in the roadmap).
-- Exporting annotations.
-- Annotations on scanned/image-only PDFs (no selectable text → toolbar simply won't appear).
-
-Approve and I'll run the migration, then build it.
+Phase 1 → Phase 2 → Phase 3 → Phase 4. Approve and I'll start with Phase 1.
