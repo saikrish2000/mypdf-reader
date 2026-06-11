@@ -3,10 +3,11 @@ import PDFUpload from '@/components/PDFUpload';
 import PDFViewer from '@/components/PDFViewer';
 import RecentFiles from '@/components/RecentFiles';
 import ThemeToggle from '@/components/ThemeToggle';
+import StatsPanel from '@/components/StatsPanel';
 import { usePDFStorage } from '@/hooks/usePDFStorage';
 import { useTheme } from '@/hooks/useTheme';
 import { getCachedPDF } from '@/lib/pdfCache';
-import { BookOpen } from 'lucide-react';
+import { BookOpen, TrendingUp } from 'lucide-react';
 import { toast } from 'sonner';
 
 const Index = () => {
