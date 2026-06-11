@@ -45,6 +45,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [bookmarksOpen, setBookmarksOpen] = useState(false);
   const [bookmarkVersion, setBookmarkVersion] = useState(0);
+  const [searchOpen, setSearchOpen] = useState(false);
   const isMobile = useIsMobile();
 
   const { saveProgress, loadProgress, getBookmarks, addBookmark, removeBookmark, isBookmarked } = usePDFStorage();
