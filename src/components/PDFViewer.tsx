@@ -96,8 +96,8 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
   useEffect(() => { continuousRef.current = continuousRead; }, [continuousRead]);
   useEffect(() => { totalPagesRef.current = totalPages; }, [totalPages]);
 
-  const bookmarks = getBookmarks(file.name);
-  const currentPageBookmarked = isBookmarked(file.name, currentPage);
+  const currentPageBookmarked = isBookmarkedFn(currentPage);
+
 
   useEffect(() => {
     const loadPDF = async () => {
