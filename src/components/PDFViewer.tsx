@@ -15,6 +15,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useAnnotations, useDocumentId, type AnnotationRect } from '@/hooks/useAnnotations';
 import { useFullTextSearch } from '@/hooks/useFullTextSearch';
 import SearchPanel from './SearchPanel';
+import { useReadingStats } from '@/hooks/useReadingStats';
 import { cachePDF } from '@/lib/pdfCache';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
