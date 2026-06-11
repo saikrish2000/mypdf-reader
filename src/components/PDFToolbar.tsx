@@ -63,6 +63,8 @@ const PDFToolbar: React.FC<PDFToolbarProps> = ({
   summaryOpen,
   onToggleChat,
   chatOpen,
+  onToggleSearch,
+  searchOpen,
   onClose,
 }) => {
   const handlePageInput = (e: React.ChangeEvent<HTMLInputElement>) => {
