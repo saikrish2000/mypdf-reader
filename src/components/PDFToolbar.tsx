@@ -88,13 +88,13 @@ const PDFToolbar: React.FC<PDFToolbarProps> = ({
         />
       </div>
 
-      <div className="flex items-center justify-between px-4 py-3 sm:px-6">
+      <div className="flex items-center justify-between gap-2 px-2 py-2 sm:px-6 sm:py-3">
         {/* Left: sidebar toggle + file info */}
-        <div className="flex items-center gap-2 flex-1 min-w-0 mr-4">
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-1 min-w-0">
           <button
             onClick={onToggleSidebar}
             className={cn(
-              "hidden sm:flex p-2 rounded-lg transition-colors",
+              "flex shrink-0 p-2 rounded-lg transition-colors min-h-[40px] min-w-[40px] items-center justify-center",
               "hover:bg-toolbar-foreground/10",
               sidebarOpen && "bg-toolbar-foreground/10"
             )}
@@ -102,20 +102,20 @@ const PDFToolbar: React.FC<PDFToolbarProps> = ({
           >
             <PanelLeft className="w-4 h-4 text-toolbar-foreground" />
           </button>
-          <div className="min-w-0">
-            <h2 className="text-sm font-medium text-toolbar-foreground truncate">
+          <div className="min-w-0 hidden xs:block sm:block">
+            <h2 className="text-xs sm:text-sm font-medium text-toolbar-foreground truncate">
               {fileName}
             </h2>
-            <p className="text-xs text-toolbar-muted">
+            <p className="text-[10px] sm:text-xs text-toolbar-muted">
               {Math.round(progress)}% complete
             </p>
           </div>
         </div>
 
         {/* Center: navigation controls */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-1 sm:gap-3 shrink-0">
           {/* Zoom controls */}
-          <div className="hidden sm:flex items-center gap-1 mr-2">
+          <div className="hidden md:flex items-center gap-1 mr-2">
             <button
               onClick={() => onScaleChange(Math.max(0.5, scale - 0.25))}
               disabled={scale <= 0.5}
@@ -148,7 +148,7 @@ const PDFToolbar: React.FC<PDFToolbarProps> = ({
             onClick={() => onPageChange(currentPage - 1)}
             disabled={currentPage <= 1}
             className={cn(
-              "p-2 rounded-lg transition-colors",
+              "p-2 rounded-lg transition-colors min-h-[40px] min-w-[40px] flex items-center justify-center",
               "hover:bg-toolbar-foreground/10 disabled:opacity-40 disabled:cursor-not-allowed"
             )}
             title="Previous page"
@@ -156,7 +156,7 @@ const PDFToolbar: React.FC<PDFToolbarProps> = ({
             <ChevronLeft className="w-5 h-5 text-toolbar-foreground" />
           </button>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <input
               type="number"
               min={1}
@@ -165,14 +165,14 @@ const PDFToolbar: React.FC<PDFToolbarProps> = ({
               onChange={handlePageInput}
               onKeyDown={handleKeyDown}
               className={cn(
-                "w-14 px-2 py-1.5 text-center text-sm rounded-lg",
+                "w-12 sm:w-14 px-1.5 sm:px-2 py-1.5 text-center text-sm rounded-lg",
                 "bg-toolbar-foreground/10 text-toolbar-foreground",
                 "border border-transparent focus:border-accent focus:outline-none",
                 "transition-colors"
               )}
             />
-            <span className="text-sm text-toolbar-muted">
-              of {totalPages}
+            <span className="text-xs sm:text-sm text-toolbar-muted whitespace-nowrap">
+              / {totalPages}
             </span>
           </div>
 
@@ -180,7 +180,7 @@ const PDFToolbar: React.FC<PDFToolbarProps> = ({
             onClick={() => onPageChange(currentPage + 1)}
             disabled={currentPage >= totalPages}
             className={cn(
-              "p-2 rounded-lg transition-colors",
+              "p-2 rounded-lg transition-colors min-h-[40px] min-w-[40px] flex items-center justify-center",
               "hover:bg-toolbar-foreground/10 disabled:opacity-40 disabled:cursor-not-allowed"
             )}
             title="Next page"
