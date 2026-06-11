@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, PanelLeft, X, Bookmark, Sparkles, MessageCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, PanelLeft, X, Bookmark, Sparkles, MessageCircle, Search } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import ReadAloudControls from './ReadAloudControls';
 import type { SpeechSettings } from '@/hooks/useSpeech';
