@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
 import pdfWorkerSrc from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+import { ZoomIn, ZoomOut } from 'lucide-react';
 import PDFToolbar from './PDFToolbar';
 import ThumbnailSidebar from './ThumbnailSidebar';
 import BookmarkPanel from './BookmarkPanel';
@@ -10,6 +11,7 @@ import PlaybackControls from './PlaybackControls';
 import VirtualPdfList from './VirtualPdfList';
 import { usePDFStorage } from '@/hooks/usePDFStorage';
 import { useSpeech } from '@/hooks/useSpeech';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { useAnnotations, useDocumentId, type AnnotationRect } from '@/hooks/useAnnotations';
 import { cachePDF } from '@/lib/pdfCache';
 import { cn } from '@/lib/utils';
