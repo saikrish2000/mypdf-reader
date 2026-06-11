@@ -85,6 +85,19 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
         setPdfDoc(pdf);
         setTotalPages(pdf.numPages);
         cachePDF(file.name, file);
+
+        // Fit-to-width on first load (especially helpful on mobile)
+        try {
+          const firstPage = await pdf.getPage(1);
+          const baseViewport = firstPage.getViewport({ scale: 1 });
+          // Available width = window width - 2 * padding (p-4 = 16px each side, p-8 = 32px on sm+)
+          const isMobile = window.innerWidth < 640;
+          const padding = isMobile ? 32 : 64;
+          const available = Math.max(280, window.innerWidth - padding);
+          const fitScale = Math.min(2, Math.max(0.5, available / baseViewport.width));
+          setScale(Number(fitScale.toFixed(2)));
+        } catch {}
+
         const saved = loadProgress(file.name);
         if (saved && saved.currentPage <= pdf.numPages) {
           setCurrentPage(saved.currentPage);
