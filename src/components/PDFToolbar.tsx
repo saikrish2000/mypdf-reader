@@ -207,6 +207,19 @@ const PDFToolbar: React.FC<PDFToolbarProps> = ({
             />
           </div>
           <button
+            onClick={onToggleSearch}
+            className={cn(
+              'p-2 rounded-lg transition-colors hover:bg-toolbar-foreground/10 min-h-[40px] min-w-[40px] flex items-center justify-center',
+              searchOpen && 'bg-toolbar-foreground/10'
+            )}
+            title="Search in document (Ctrl+F)"
+          >
+            <Search className={cn(
+              'w-4 h-4 text-toolbar-foreground',
+              searchOpen && 'text-accent'
+            )} />
+          </button>
+          <button
             onClick={onSummarize}
             className={cn(
               'p-2 rounded-lg transition-colors hover:bg-toolbar-foreground/10 min-h-[40px] min-w-[40px] flex items-center justify-center',
