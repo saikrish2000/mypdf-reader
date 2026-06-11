@@ -32,6 +32,8 @@ interface PDFToolbarProps {
   summaryOpen: boolean;
   onToggleChat: () => void;
   chatOpen: boolean;
+  onToggleSearch: () => void;
+  searchOpen: boolean;
   onClose: () => void;
 }
 
