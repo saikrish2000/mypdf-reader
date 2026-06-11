@@ -337,6 +337,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, onClose, theme, onToggleThe
         continuousRead={continuousRead} onContinuousChange={setContinuousRead}
         onSummarize={handleSummarize} summaryOpen={summaryOpen}
         onToggleChat={() => setChatOpen(p => !p)} chatOpen={chatOpen}
+        onToggleSearch={() => setSearchOpen(p => !p)} searchOpen={searchOpen}
         onClose={onClose}
       />
 
