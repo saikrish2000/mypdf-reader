@@ -18,6 +18,7 @@ const Index = () => {
   const { getRecentFiles } = usePDFStorage();
   const [recentFiles, setRecentFiles] = useState<ReturnType<typeof getRecentFiles>>([]);
   const { theme, toggleTheme, setTheme } = useTheme();
+  const { user, signOut } = useAuth();
   const [statsOpen, setStatsOpen] = useState(false);
 
   useEffect(() => {
