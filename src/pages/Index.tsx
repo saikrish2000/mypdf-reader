@@ -61,9 +61,19 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background transition-colors duration-300">
       {/* Top-right controls */}
-      <div className="fixed top-4 right-4 z-10">
+      <div className="fixed top-4 right-4 z-10 flex items-center gap-2">
+        <button
+          onClick={() => setStatsOpen(true)}
+          className="p-2 rounded-lg bg-card border border-border hover:bg-muted transition-colors"
+          title="Reading stats"
+          aria-label="Reading stats"
+        >
+          <TrendingUp className="w-4 h-4 text-foreground" />
+        </button>
         <ThemeToggle theme={theme} onToggle={toggleTheme} onSelect={setTheme} />
       </div>
+
+      <StatsPanel isOpen={statsOpen} onClose={() => setStatsOpen(false)} />
 
       <div className="container max-w-4xl mx-auto px-4 py-12 sm:py-20">
         {/* Header */}
