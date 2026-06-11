@@ -94,11 +94,10 @@ const ThumbnailSidebar: React.FC<ThumbnailSidebarProps> = ({
       {/* Sidebar */}
       <div
         className={cn(
-          "fixed left-0 top-0 bottom-0 z-20 flex flex-col",
+          "fixed left-0 top-0 bottom-0 z-40 flex flex-col",
           "bg-card border-r border-border shadow-lg",
           "transition-all duration-300 ease-out",
-          "hidden sm:flex",
-          isOpen ? "w-48 translate-x-0" : "w-0 -translate-x-full"
+          isOpen ? "w-64 sm:w-48 translate-x-0" : "w-0 -translate-x-full"
         )}
       >
         {/* Header */}
