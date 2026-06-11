@@ -190,20 +190,22 @@ const PDFToolbar: React.FC<PDFToolbarProps> = ({
         </div>
 
         {/* Right: bookmarks + theme toggle + close */}
-        <div className="flex items-center gap-1 ml-4">
-          <ReadAloudControls
-            isReading={isReading}
-            onToggleRead={onToggleRead}
-            voices={voices}
-            settings={speechSettings}
-            onSettingsChange={onSpeechSettingsChange}
-            continuous={continuousRead}
-            onContinuousChange={onContinuousChange}
-          />
+        <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
+          <div className="hidden sm:flex items-center gap-0.5">
+            <ReadAloudControls
+              isReading={isReading}
+              onToggleRead={onToggleRead}
+              voices={voices}
+              settings={speechSettings}
+              onSettingsChange={onSpeechSettingsChange}
+              continuous={continuousRead}
+              onContinuousChange={onContinuousChange}
+            />
+          </div>
           <button
             onClick={onSummarize}
             className={cn(
-              'p-2 rounded-lg transition-colors hover:bg-toolbar-foreground/10',
+              'p-2 rounded-lg transition-colors hover:bg-toolbar-foreground/10 min-h-[40px] min-w-[40px] flex items-center justify-center',
               summaryOpen && 'bg-toolbar-foreground/10'
             )}
             title="Summarize this page with AI"
@@ -216,7 +218,7 @@ const PDFToolbar: React.FC<PDFToolbarProps> = ({
           <button
             onClick={onToggleChat}
             className={cn(
-              'p-2 rounded-lg transition-colors hover:bg-toolbar-foreground/10',
+              'p-2 rounded-lg transition-colors hover:bg-toolbar-foreground/10 min-h-[40px] min-w-[40px] flex items-center justify-center',
               chatOpen && 'bg-toolbar-foreground/10'
             )}
             title="Ask questions about this page"
@@ -229,7 +231,7 @@ const PDFToolbar: React.FC<PDFToolbarProps> = ({
           <button
             onClick={onToggleBookmarks}
             className={cn(
-              "p-2 rounded-lg transition-colors",
+              "p-2 rounded-lg transition-colors min-h-[40px] min-w-[40px] flex items-center justify-center",
               "hover:bg-toolbar-foreground/10",
               bookmarksOpen && "bg-toolbar-foreground/10"
             )}
@@ -240,10 +242,12 @@ const PDFToolbar: React.FC<PDFToolbarProps> = ({
               isCurrentPageBookmarked && "fill-accent text-accent"
             )} />
           </button>
-          <ThemeToggle theme={theme} onToggle={onToggleTheme} onSelect={onSelectTheme} variant="toolbar" />
+          <div className="hidden sm:block">
+            <ThemeToggle theme={theme} onToggle={onToggleTheme} onSelect={onSelectTheme} variant="toolbar" />
+          </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-toolbar-foreground/10 transition-colors"
+            className="p-2 rounded-lg hover:bg-toolbar-foreground/10 transition-colors min-h-[40px] min-w-[40px] flex items-center justify-center"
             title="Close"
           >
             <X className="w-4 h-4 text-toolbar-foreground" />
