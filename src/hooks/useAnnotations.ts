@@ -83,7 +83,7 @@ export function useAnnotations(documentId: string | null) {
       });
 
     const ch = supabase
-      .channel(`annot-${documentId}`)
+      .channel(`user:${user.id}:annot-${documentId}`, { config: { private: true } })
       .on('postgres_changes',
         { event: '*', schema: 'public', table: 'annotations', filter: `document_id=eq.${documentId}` },
         (payload) => {
