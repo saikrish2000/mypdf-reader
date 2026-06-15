@@ -9,7 +9,7 @@ import { usePDFStorage } from '@/hooks/usePDFStorage';
 import { useTheme } from '@/hooks/useTheme';
 import { useAuth } from '@/hooks/useAuth';
 import { getCachedPDF } from '@/lib/pdfCache';
-import { BookOpen, TrendingUp, Cloud, LogOut } from 'lucide-react';
+import { BookOpen, TrendingUp, Cloud, LogOut, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 
 const Index = () => {
