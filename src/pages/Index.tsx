@@ -73,6 +73,14 @@ const Index = () => {
         >
           <TrendingUp className="w-4 h-4 text-foreground" />
         </button>
+        <Link
+          to="/security"
+          className="p-2 rounded-lg bg-card border border-border hover:bg-muted transition-colors"
+          title="Security findings"
+          aria-label="Security findings"
+        >
+          <Shield className="w-4 h-4 text-foreground" />
+        </Link>
         {user ? (
           <button
             onClick={() => signOut()}
