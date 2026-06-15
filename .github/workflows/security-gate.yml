@@ -1,0 +1,62 @@
+name: Security Gate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  security-gate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install deps
+        run: bun install --frozen-lockfile
+
+      - name: Dependency audit (fail on high/critical)
+        run: |
+          set -o pipefail
+          bun audit --json > audit.json || true
+          node -e "
+            const a = require('./audit.json');
+            const sev = a.metadata?.vulnerabilities ?? {};
+            const bad = (sev.high ?? 0) + (sev.critical ?? 0);
+            console.log('Audit summary:', JSON.stringify(sev));
+            if (bad > 0) { console.error('FAIL: ' + bad + ' high/critical advisories'); process.exit(1); }
+          "
+
+      - name: Secret scan (gitleaks)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: detect --no-banner --redact --exit-code 1
+
+      - name: Lovable scan-results gate
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'security-gate-bypass') }}
+        env:
+          LOVABLE_API_KEY: ${{ secrets.LOVABLE_API_KEY }}
+          LOVABLE_PROJECT_ID: ${{ secrets.LOVABLE_PROJECT_ID }}
+        run: node scripts/security-gate.mjs
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-report
+          path: |
+            audit.json
+            security-findings.json
+          if-no-files-found: ignore
