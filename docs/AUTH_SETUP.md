@@ -30,6 +30,7 @@ Restart the dev server after changing `.env`.
    - **Authorized JavaScript origins:**
      - `http://localhost:8080`
      - `http://localhost:8081`
+     - `https://mypdf-reader-delta.vercel.app`
    - **Authorized redirect URIs** (must match exactly):
      - `https://lgparlvsqrlrtqfyavle.supabase.co/auth/v1/callback`
 5. Copy **Client ID** and **Client Secret**
@@ -42,10 +43,50 @@ If you see `Error 400: redirect_uri_mismatch`, the redirect URI above is missing
 2. **Authentication → Providers → Google** — enable, paste Client ID + Secret, Save
 3. **Authentication → Providers → Email** — enable (disable **Confirm email** for local dev if desired)
 4. **Authentication → URL Configuration**
-   - Site URL: `http://localhost:8080`
-   - Redirect URLs: `http://localhost:8080/**`, `http://localhost:8080/library`, `http://localhost:8080/auth`
+   - Site URL: `http://localhost:8080` (local) or `https://mypdf-reader-delta.vercel.app` (production)
+   - Redirect URLs: `http://localhost:8080/**`, `http://localhost:8080/library`, `http://localhost:8080/auth`, `https://mypdf-reader-delta.vercel.app/**`
 
 ## Verify
 
 1. `/auth` → **Continue with Google** → Google login → redirect to `/library` (no `redirect_uri_mismatch`)
 2. Email sign-up → confirm (if enabled) → sign in → Network tab shows **200** on `/auth/v1/token?grant_type=password`
+
+## Production (Vercel)
+
+Deploy at [mypdf-reader-delta.vercel.app](https://mypdf-reader-delta.vercel.app) requires extra steps beyond local `.env`.
+
+### Vercel environment variables
+
+In **Vercel → Project → Settings → Environment Variables**, add for **Production** (and Preview if used):
+
+| Name | Value |
+|------|--------|
+| `VITE_SUPABASE_URL` | `https://lgparlvsqrlrtqfyavle.supabase.co` |
+| `VITE_SUPABASE_ANON_KEY` | Your publishable key from Supabase API settings |
+
+Vite bakes these in at **build time**. After adding or changing them, **Redeploy** (do not reuse an old build).
+
+### Supabase URL configuration (production)
+
+**Authentication → URL Configuration:**
+
+- **Site URL:** `https://mypdf-reader-delta.vercel.app`
+- **Redirect URLs:** add `https://mypdf-reader-delta.vercel.app/**`
+
+Keep localhost entries if you still develop locally.
+
+### Google OAuth (production)
+
+In Google Cloud Console, add to **Authorized JavaScript origins:**
+
+- `https://mypdf-reader-delta.vercel.app`
+
+Redirect URI stays Supabase (do not point at Vercel):
+
+- `https://lgparlvsqrlrtqfyavle.supabase.co/auth/v1/callback`
+
+### Verify production sign-in
+
+1. Open `/auth` in an incognito window on the production URL.
+2. DevTools → **Application → Local Storage** — look for `sb-lgparlvsqrlrtqfyavle-auth-token` after sign-in.
+3. Network tab — `supabase.co` auth requests should return **200**.

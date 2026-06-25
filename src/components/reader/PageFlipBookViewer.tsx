@@ -19,6 +19,7 @@ interface PageFlipBookViewerProps {
   totalPages: number;
   currentPage: number;
   coverPage?: number;
+  singlePageView?: boolean;
   onPageChange: (page: number) => void;
   onAnimatingChange?: (animating: boolean) => void;
   onRenderFailed?: () => void;
@@ -72,6 +73,7 @@ const PageFlipBookViewer: React.FC<PageFlipBookViewerProps> = ({
   totalPages,
   currentPage,
   coverPage = 1,
+  singlePageView = false,
   onPageChange,
   onAnimatingChange,
   onRenderFailed,
@@ -119,8 +121,11 @@ const PageFlipBookViewer: React.FC<PageFlipBookViewerProps> = ({
   reportAnimatingRef.current = reportAnimating;
 
   const flushImageUpdate = useCallback(() => {
-    if (!pageFlipRef.current) return;
-    pageFlipRef.current.updateFromImages([...imagesRef.current]);
+    const pf = pageFlipRef.current;
+    if (!pf || lastAnimatingRef.current) return;
+    const idx = pf.getCurrentPageIndex();
+    pf.updateFromImages([...imagesRef.current]);
+    if (pf.getCurrentPageIndex() !== idx) pf.turnToPage(idx);
   }, []);
 
   const scheduleImageUpdate = useCallback(() => {
@@ -296,25 +301,26 @@ const PageFlipBookViewer: React.FC<PageFlipBookViewerProps> = ({
     const pf = pageFlipRef.current;
     if (!pf || !ready) return;
 
-    if (internalFlipRef.current) {
-      internalFlipRef.current = false;
-      return;
-    }
-
     const target = currentPage - 1;
     const current = pf.getCurrentPageIndex();
-    if (current === target) return;
+    const userNav = userNavRef.current;
+
+    if (internalFlipRef.current) {
+      internalFlipRef.current = false;
+      if (current === target) return;
+    }
+
+    if (!userNav && current === target) return;
 
     lastReportedPageRef.current = currentPage;
 
-    if (userNavRef.current && Math.abs(current - target) === 1) {
+    if (userNav) {
       userNavRef.current = false;
       if (target > current) pf.flipNext('top');
-      else pf.flipPrev('top');
+      else if (target < current) pf.flipPrev('top');
       return;
     }
 
-    userNavRef.current = false;
     if (Math.abs(current - target) === 1) {
       if (target > current) pf.flipNext('top');
       else pf.flipPrev('top');
@@ -338,20 +344,20 @@ const PageFlipBookViewer: React.FC<PageFlipBookViewerProps> = ({
   }, [flipCancelRef, cancelFlip]);
 
   const goPrev = useCallback(() => {
-    const target = getPrevFlipPage(currentPage, totalPages, false, coverPage);
+    const target = getPrevFlipPage(currentPage, totalPages, singlePageView, coverPage);
     if (target !== currentPage) {
       userNavRef.current = true;
       onPageChange(target);
     }
-  }, [currentPage, totalPages, coverPage, onPageChange]);
+  }, [currentPage, totalPages, singlePageView, coverPage, onPageChange]);
 
   const goNext = useCallback(() => {
-    const target = getNextFlipPage(currentPage, totalPages, false, coverPage);
+    const target = getNextFlipPage(currentPage, totalPages, singlePageView, coverPage);
     if (target !== currentPage) {
       userNavRef.current = true;
       onPageChange(target);
     }
-  }, [currentPage, totalPages, coverPage, onPageChange]);
+  }, [currentPage, totalPages, singlePageView, coverPage, onPageChange]);
 
   if (renderFailed) {
     return (

@@ -26,21 +26,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!cancelled) setLoading(false);
     }, 5000);
 
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
+      if (cancelled) return;
+      setSession(s);
+      setLoading(false);
+    });
+
     supabase.auth.getSession().then(({ data }) => {
       if (cancelled) return;
       setSession(data.session);
-    }).catch(() => {
-      // getSession failed — stay logged out
+    }).catch((err) => {
+      if (import.meta.env.DEV) console.warn('getSession failed:', err);
     }).finally(() => {
       if (cancelled) return;
       clearTimeout(timeout);
       setLoading(false);
     });
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
-      setSession(s);
-      setLoading(false);
-    });
     return () => {
       cancelled = true;
       clearTimeout(timeout);

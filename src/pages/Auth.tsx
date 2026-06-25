@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import { authUnavailableMessage, isSupabaseConfigured, supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import AuthLayout from '@/components/auth/AuthLayout';
@@ -40,6 +40,10 @@ const Auth: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!supabase) {
+      toast.error(authUnavailableMessage);
+      return;
+    }
     setBusy(true);
     try {
       if (mode === 'forgot') {
@@ -80,6 +84,10 @@ const Auth: React.FC = () => {
   };
 
   const handleResendConfirmation = async () => {
+    if (!supabase) {
+      toast.error(authUnavailableMessage);
+      return;
+    }
     setBusy(true);
     const targetEmail = unconfirmedEmail || email;
     try {
@@ -98,6 +106,10 @@ const Auth: React.FC = () => {
   };
 
   const handleGoogle = async () => {
+    if (!supabase) {
+      toast.error(authUnavailableMessage);
+      return;
+    }
     setBusy(true);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -114,6 +126,11 @@ const Auth: React.FC = () => {
 
   return (
     <AuthLayout>
+      {!isSupabaseConfigured && (
+        <p className="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-200 text-center max-w-md mx-auto">
+          {authUnavailableMessage}
+        </p>
+      )}
       <AuthCard
         mode={mode}
         email={email}

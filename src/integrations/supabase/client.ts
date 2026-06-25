@@ -7,6 +7,9 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 export const isSupabaseConfigured = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 
+export const authUnavailableMessage =
+  'Sign-in is unavailable — Supabase is not configured for this deployment.';
+
 // ponytail: null when env missing so Vite build/deploy works; callers guard before use.
 export const supabase = isSupabaseConfigured
   ? createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {

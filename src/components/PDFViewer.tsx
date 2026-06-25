@@ -366,6 +366,11 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
       setSummaryLoading(false);
       return;
     }
+    if (!supabase) {
+      setSummaryError('AI summary is unavailable — Supabase is not configured.');
+      setSummaryLoading(false);
+      return;
+    }
     try {
       const text = await extractPageText(pageNum);
       if (!text) { setSummaryError('No readable text on this page to summarize.'); return; }
@@ -400,6 +405,11 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
         chatScope === 'range' ? chatRangeEnd : undefined,
       );
       const useDocChat = chatScope !== 'page';
+      if (!supabase) {
+        setChatError('AI chat is unavailable — Supabase is not configured.');
+        setChatStreaming(false);
+        return;
+      }
       const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${useDocChat ? 'chat-document' : 'chat-page'}`;
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
@@ -713,6 +723,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
         totalPages={totalPages}
         currentPage={currentPage}
         coverPage={coverPage}
+        singlePageView={flipSinglePageView}
         onPageChange={handlePageChange}
         onAnimatingChange={handleFlipAnimatingChange}
         onRenderFailed={handleFlipRenderFailed}

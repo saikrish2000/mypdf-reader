@@ -34,28 +34,35 @@ export function useDocumentId(file: File | null, pageCount: number) {
     const run = async () => {
       if (!file || !user) { setDocumentId(null); return; }
       if (pageCount <= 0) return;
+      if (!supabase) return;
 
-      const hash = await hashFile(file);
-      const { data: existing } = await supabase
-        .from('documents')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('content_hash', hash)
-        .maybeSingle();
-      if (cancelled) return;
-      if (existing) {
-        setDocumentId(existing.id);
-        await supabase.from('documents')
-          .update({ last_opened_at: new Date().toISOString(), file_name: file.name, page_count: pageCount })
-          .eq('id', existing.id);
-        return;
+      try {
+        const hash = await hashFile(file);
+        const { data: existing, error: selectError } = await supabase
+          .from('documents')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('content_hash', hash)
+          .maybeSingle();
+        if (cancelled) return;
+        if (selectError) throw selectError;
+        if (existing) {
+          setDocumentId(existing.id);
+          await supabase.from('documents')
+            .update({ last_opened_at: new Date().toISOString(), file_name: file.name, page_count: pageCount })
+            .eq('id', existing.id);
+          return;
+        }
+        const { data: created, error } = await supabase
+          .from('documents')
+          .insert({ user_id: user.id, content_hash: hash, file_name: file.name, page_count: pageCount })
+          .select('id')
+          .single();
+        if (!error && created && !cancelled) setDocumentId(created.id);
+        else if (error) throw error;
+      } catch {
+        if (!cancelled) toast.error('Could not register document for cloud sync.');
       }
-      const { data: created, error } = await supabase
-        .from('documents')
-        .insert({ user_id: user.id, content_hash: hash, file_name: file.name, page_count: pageCount })
-        .select('id')
-        .single();
-      if (!error && created && !cancelled) setDocumentId(created.id);
     };
     run();
     return () => { cancelled = true; };
