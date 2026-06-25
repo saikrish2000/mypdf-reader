@@ -28,6 +28,9 @@ export const lovable = {
       }
 
       try {
+        if (!supabase) {
+          return { error: new Error('Supabase is not configured') };
+        }
         await supabase.auth.setSession(result.tokens);
       } catch (e) {
         return { error: e instanceof Error ? e : new Error(String(e)) };

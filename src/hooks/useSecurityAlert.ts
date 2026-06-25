@@ -9,7 +9,7 @@ export function useSecurityAlert() {
   const [hasHighSeverity, setHasHighSeverity] = useState(false);
 
   const check = useCallback(async () => {
-    if (!user) {
+    if (!user || !supabase) {
       setHasHighSeverity(false);
       return;
     }

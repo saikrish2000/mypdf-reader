@@ -16,6 +16,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
+
     let cancelled = false;
     const timeout = setTimeout(() => {
       if (!cancelled) setLoading(false);
@@ -44,7 +49,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    await supabase?.auth.signOut();
   };
 
   return (
