@@ -17,32 +17,34 @@ const FEATURES = [
 
 export default function FeaturesGrid() {
   return (
-    <section id="features" className="landing-section-gap scroll-mt-20">
-      <SectionHeader
-        eyebrow={featuresContent.eyebrow}
-        title={featuresContent.title}
-        description={featuresContent.description}
-        align="center"
-      />
-      <motion.div
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: '-60px' }}
-        variants={staggerContainer}
-        className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4"
-      >
-        {FEATURES.map(({ icon: Icon, title, description }) => (
-          <motion.div key={title} variants={fadeUp}>
-            <GlowCard className="p-5 h-full">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/10 text-violet-400 mb-4">
-                <Icon className="h-5 w-5" />
-              </div>
-              <h3 className="text-sm font-semibold text-foreground mb-1">{title}</h3>
-              <p className="text-sm text-muted-foreground">{description}</p>
-            </GlowCard>
-          </motion.div>
-        ))}
-      </motion.div>
+    <section id="features" className="landing-snap-section landing-snap-section--scroll">
+      <div className="w-full py-4">
+        <SectionHeader
+          eyebrow={featuresContent.eyebrow}
+          title={featuresContent.title}
+          description={featuresContent.description}
+          align="center"
+        />
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-60px' }}
+          variants={staggerContainer}
+          className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4"
+        >
+          {FEATURES.map(({ icon: Icon, title, description }) => (
+            <motion.div key={title} variants={fadeUp}>
+              <GlowCard className="p-5 h-full">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/10 text-accent mb-4">
+                  <Icon className="h-5 w-5" />
+                </div>
+                <h3 className="text-sm font-semibold text-foreground mb-1">{title}</h3>
+                <p className="text-sm text-muted-foreground">{description}</p>
+              </GlowCard>
+            </motion.div>
+          ))}
+        </motion.div>
+      </div>
     </section>
   );
 }

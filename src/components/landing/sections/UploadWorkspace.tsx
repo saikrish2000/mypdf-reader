@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
+import { Loader2 } from 'lucide-react';
 import PDFUpload from '@/components/PDFUpload';
-import { Progress } from '@/components/ui/progress';
 import SectionHeader from '@/components/landing/ui/SectionHeader';
 import LandingRecentLibrary from '@/components/landing/sections/LandingRecentLibrary';
 import { useOpenDocument } from '@/hooks/useOpenDocument';
@@ -37,8 +37,8 @@ export default function UploadWorkspace() {
       </motion.div>
 
       {isLoading && (
-        <div className="mt-4 space-y-2">
-          <Progress value={66} className="h-1.5" />
+        <div className="mt-4 flex flex-col items-center gap-2">
+          <Loader2 className="h-5 w-5 animate-spin text-accent" aria-hidden />
           <p className="text-xs text-muted-foreground text-center">Opening your document…</p>
         </div>
       )}

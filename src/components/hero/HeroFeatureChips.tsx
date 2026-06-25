@@ -79,7 +79,7 @@ export default function HeroFeatureChips({ theme }: HeroFeatureChipsProps) {
         : soon
           ? 'border border-border bg-muted/30 text-muted-foreground'
 
-          : 'border border-violet-500/20 bg-violet-500/10 text-violet-300',
+          : 'border border-accent/20 bg-accent/10 text-accent',
 
     );
 

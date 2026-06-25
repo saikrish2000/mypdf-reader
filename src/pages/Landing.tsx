@@ -3,6 +3,11 @@ import Navbar from '@/components/Navbar';
 import HeroSection from '@/components/hero/HeroSection';
 import UploadWorkspace from '@/components/landing/sections/UploadWorkspace';
 import InteractiveDemo from '@/components/landing/sections/InteractiveDemo';
+import FeaturesGrid from '@/components/landing/sections/FeaturesGrid';
+import AIToolsGrid from '@/components/landing/sections/AIToolsGrid';
+import HowItWorks from '@/components/landing/sections/HowItWorks';
+import Pricing from '@/components/landing/sections/Pricing';
+import Testimonials from '@/components/landing/sections/Testimonials';
 import LandingFooter from '@/components/landing/sections/LandingFooter';
 import { useTheme } from '@/hooks/useTheme';
 import { useOpenDocument } from '@/hooks/useOpenDocument';
@@ -34,6 +39,11 @@ const Landing = () => {
           />
           <UploadWorkspace />
           <InteractiveDemo />
+          <FeaturesGrid />
+          <AIToolsGrid />
+          <HowItWorks />
+          <Pricing />
+          <Testimonials />
         </div>
         <LandingFooter />
       </main>

@@ -244,6 +244,29 @@
     @apply overflow-y-auto;
   }
 
+  /* heroPanel overlay card — tab label abbrev by card width, not viewport */
+  .hero-panel-card {
+    container-type: inline-size;
+  }
+
+  @container (min-width: 360px) {
+    .hero-tab-label-full {
+      display: inline;
+    }
+    .hero-tab-label-abbr {
+      display: none;
+    }
+  }
+
+  @container (max-width: 359px) {
+    .hero-tab-label-full {
+      display: none;
+    }
+    .hero-tab-label-abbr {
+      display: inline;
+    }
+  }
+
   .landing-section-gap {
     margin-bottom: 4.5rem;
   }
@@ -530,7 +553,7 @@
   }
 
   .glass-panel {
-    @apply rounded-2xl border border-white/10 bg-card/60 backdrop-blur-xl;
+    @apply rounded-2xl border border-border bg-card/60 backdrop-blur-xl;
   }
 
   .text-gradient-hero {

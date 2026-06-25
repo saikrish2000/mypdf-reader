@@ -4,7 +4,7 @@ import { MessageSquare, Highlighter, StickyNote, Layers, Sparkles, ArrowRight, L
 import GlowCard from '@/components/landing/ui/GlowCard';
 import GradientButton from '@/components/landing/ui/GradientButton';
 import DemoWorkspace from './DemoWorkspace';
-import { demoContent } from '@/lib/landing/content';
+import { demoContent, aiToolsContent } from '@/lib/landing/content';
 import { fadeUp, staggerContainer } from '@/lib/landing/motion';
 import { Button } from '@/components/ui/button';
 import { handleSectionNavClick } from '@/lib/landing/scrollToSection';
@@ -27,9 +27,9 @@ export default function InteractiveDemo() {
           whileInView="visible"
           viewport={{ once: true, margin: '-60px' }}
           variants={staggerContainer}
-          className="min-w-0"
+          className="min-w-0 order-2 lg:order-none"
         >
-          <motion.p variants={fadeUp} className="mb-3 text-xs font-medium uppercase tracking-widest text-violet-400">
+          <motion.p variants={fadeUp} className="mb-3 text-xs font-medium uppercase tracking-widest text-accent">
             {demoContent.eyebrow}
           </motion.p>
           <motion.h2 variants={fadeUp} className="text-3xl sm:text-4xl font-semibold tracking-tight text-foreground">
@@ -39,16 +39,19 @@ export default function InteractiveDemo() {
             {demoContent.description}
           </motion.p>
 
-          <motion.ul variants={fadeUp} className="mt-8 space-y-3">
+          <motion.ul variants={fadeUp} className="mt-6 space-y-2 lg:mt-8 lg:space-y-3">
             {FEATURES.map(({ icon: Icon, label }) => (
               <li key={label} className="flex items-center gap-3 text-sm text-foreground/90">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-500/10 text-violet-400">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
                   <Icon className="h-4 w-4" />
                 </span>
                 <span>{label}</span>
               </li>
             ))}
           </motion.ul>
+          <motion.p variants={fadeUp} className="mt-4 text-xs text-muted-foreground">
+            {aiToolsContent.description}
+          </motion.p>
 
           <motion.div variants={fadeUp} className="mt-8 flex flex-col sm:flex-row gap-3">
             <GradientButton asChild size="lg">
@@ -71,7 +74,7 @@ export default function InteractiveDemo() {
           whileInView="visible"
           viewport={{ once: true, margin: '-60px' }}
           variants={fadeUp}
-          className="min-w-0"
+          className="min-w-0 order-1 lg:order-none"
         >
           <GlowCard glow className="p-1 sm:p-2">
             <DemoWorkspace />

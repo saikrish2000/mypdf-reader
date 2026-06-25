@@ -1,13 +1,15 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { footerContent } from '@/lib/landing/content';
+import { handleSectionNavClick } from '@/lib/landing/scrollToSection';
 
 export default function LandingFooter() {
   const year = new Date().getFullYear();
+  const location = useLocation();
 
   return (
     <footer className="border-t border-border mt-8">
       <div className="landing-shell py-12 sm:py-16">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-8 mb-12">
           {footerContent.columns.map((col) => (
             <div key={col.title}>
               <h3 className="text-sm font-semibold text-foreground mb-4">{col.title}</h3>
@@ -24,6 +26,9 @@ export default function LandingFooter() {
                     ) : (
                       <a
                         href={link.href}
+                        onClick={(e) =>
+                          location.pathname === '/' && handleSectionNavClick(e, link.href)
+                        }
                         className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                       >
                         {link.label}

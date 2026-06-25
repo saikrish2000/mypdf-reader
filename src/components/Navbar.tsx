@@ -9,6 +9,8 @@ import {
   Upload,
   LogIn,
   Sparkles,
+  Layers,
+  CreditCard,
 } from 'lucide-react';
 import { useScroll } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -30,7 +32,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { useAuth } from '@/hooks/useAuth';
 import { useSecurityAlert } from '@/hooks/useSecurityAlert';
 import { navLinks } from '@/lib/landing/content';
-import { handleSectionNavClick } from '@/lib/landing/scrollToSection';
+import { handleSectionNavClick, scrollToSection } from '@/lib/landing/scrollToSection';
 
 type NavbarVariant = 'landing' | 'marketing' | 'library';
 
@@ -304,7 +306,7 @@ const Navbar: React.FC<NavbarProps> = ({
                 onSelect={() =>
                   runCommand(() => {
                     if (onUploadClick) onUploadClick();
-                    else document.getElementById('upload')?.scrollIntoView({ behavior: 'smooth' });
+                    else scrollToSection('upload');
                   })
                 }
               >
@@ -316,12 +318,22 @@ const Navbar: React.FC<NavbarProps> = ({
                 Go to Library
               </CommandItem>
               <CommandItem
-                onSelect={() =>
-                  runCommand(() => document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' }))
-                }
+                onSelect={() => runCommand(() => scrollToSection('demo'))}
               >
                 <Sparkles className="mr-2 h-4 w-4" />
                 View Demo
+              </CommandItem>
+              <CommandItem
+                onSelect={() => runCommand(() => scrollToSection('features'))}
+              >
+                <Layers className="mr-2 h-4 w-4" />
+                View Features
+              </CommandItem>
+              <CommandItem
+                onSelect={() => runCommand(() => scrollToSection('pricing'))}
+              >
+                <CreditCard className="mr-2 h-4 w-4" />
+                View Pricing
                 <CommandShortcut>↵</CommandShortcut>
               </CommandItem>
               {!user && (

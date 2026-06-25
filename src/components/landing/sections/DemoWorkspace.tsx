@@ -250,8 +250,8 @@ export default function DemoWorkspace({ variant = 'default', embedded = false }:
                 >
                   {isHeroPanel ? (
                     <>
-                      <span className="hidden min-[360px]:inline">{tab}</span>
-                      <span className="min-[360px]:hidden">{tab.slice(0, 3)}</span>
+                      <span className="hero-tab-label-full">{tab}</span>
+                      <span className="hero-tab-label-abbr">{tab.slice(0, 3)}</span>
                     </>
                   ) : (
                     tab

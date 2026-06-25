@@ -33,14 +33,14 @@ export default function LandingRecentLibrary({ refreshKey }: LandingRecentLibrar
     >
       <div className="flex flex-wrap items-end justify-between gap-3 mb-5">
         <div>
-          <p className="text-xs font-medium uppercase tracking-widest text-violet-400 mb-1">
+          <p className="text-xs font-medium uppercase tracking-widest text-accent mb-1">
             {uploadContent.recentLabel}
           </p>
           <p className="text-sm text-muted-foreground">{uploadContent.recentDescription}</p>
         </div>
         <Link
           to="/library"
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-violet-400 hover:text-violet-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 rounded-md px-1"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-accent hover:text-accent/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-md px-1"
         >
           {uploadContent.viewLibrary}
           <ArrowRight className="h-4 w-4" />
@@ -59,7 +59,7 @@ export default function LandingRecentLibrary({ refreshKey }: LandingRecentLibrar
           {totalCount > PREVIEW_LIMIT && (
             <p className="text-center text-xs text-muted-foreground mt-4">
               +{totalCount - PREVIEW_LIMIT} more in{' '}
-              <Link to="/library" className="text-violet-400 hover:underline">
+              <Link to="/library" className="text-accent hover:underline">
                 your library
               </Link>
             </p>
@@ -67,7 +67,7 @@ export default function LandingRecentLibrary({ refreshKey }: LandingRecentLibrar
         </>
       ) : (
         <div className="py-8 text-center">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-violet-500/10 text-violet-400">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-accent/10 text-accent">
             <BookOpen className="h-6 w-6" />
           </div>
           <p className="text-sm font-medium text-foreground">{uploadContent.emptyLibraryTitle}</p>
@@ -76,7 +76,7 @@ export default function LandingRecentLibrary({ refreshKey }: LandingRecentLibrar
           </p>
           <Link
             to="/library"
-            className="inline-flex items-center gap-1.5 mt-4 text-sm font-medium text-violet-400 hover:text-violet-300"
+            className="inline-flex items-center gap-1.5 mt-4 text-sm font-medium text-accent hover:text-accent/80"
           >
             Go to library
             <ArrowRight className="h-3.5 w-3.5" />

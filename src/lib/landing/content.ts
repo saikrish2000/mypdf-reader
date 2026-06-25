@@ -35,24 +35,18 @@ export const footerContent = {
     {
       title: 'Product',
       links: [
-        { label: 'Features', href: '#demo' },
+        { label: 'Features', href: '#features' },
         { label: 'Upload', href: '#upload' },
         { label: 'Demo', href: '#demo' },
+        { label: 'Pricing', href: '#pricing' },
         { label: 'Library', href: '/library' },
       ],
     },
     {
       title: 'Resources',
       links: [
-        { label: 'Features', href: '#demo' },
-        { label: 'Security', href: '/security' },
-      ],
-    },
-    {
-      title: 'Legal',
-      links: [
-        { label: 'Privacy', href: '#' },
-        { label: 'Terms', href: '#' },
+        { label: 'How it works', href: '#how-it-works' },
+        { label: 'AI tools', href: '#ai-tools' },
       ],
     },
     {
@@ -68,7 +62,8 @@ export const footerContent = {
 export const navLinks = [
   { label: 'Upload', href: '#upload' },
   { label: 'Demo', href: '#demo' },
-  { label: 'Features', href: '#demo' },
+  { label: 'Features', href: '#features' },
+  { label: 'Pricing', href: '#pricing' },
 ] as const;
 
 export const featuresContent = {

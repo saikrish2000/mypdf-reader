@@ -5,7 +5,6 @@ import { getHeroConfig } from './heroThemeConfig';
 import SplineLoader from './SplineLoader';
 import DemoWorkspace from '@/components/landing/sections/DemoWorkspace';
 import { useMinLg } from '@/hooks/use-mobile';
-import { demoContent } from '@/lib/landing/content';
 
 export const ROBOT_SCENE_URL = 'https://prod.spline.design/PyzDhpQ9E5f1E3MT/scene.splinecode';
 
@@ -58,16 +57,13 @@ export default function HeroLivePreview({ theme, className }: HeroLivePreviewPro
         <div
           className={cn(
             OVERLAY_CARD_WIDTH,
-            'overflow-hidden rounded-lg border border-border/80 bg-card/95 shadow-elevated backdrop-blur-md',
+            'hero-panel-card overflow-hidden rounded-lg border border-border/80 bg-card/95 shadow-elevated backdrop-blur-md',
           )}
         >
           <div className={OVERLAY_CARD_HEIGHT}>
             <DemoWorkspace variant="heroPanel" embedded />
           </div>
         </div>
-        <p className="mt-2 max-w-sm text-center text-[10px] leading-tight text-muted-foreground sm:text-xs">
-          {demoContent.demoHint}
-        </p>
       </div>
     </div>
   );
