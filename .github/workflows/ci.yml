@@ -1,4 +1,4 @@
-name: Security Gate
+name: CI
 
 on:
   pull_request:
@@ -6,6 +6,25 @@ on:
     branches: [main]
 
 jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm test -- --run
+
   security-gate:
     runs-on: ubuntu-latest
     permissions:
@@ -17,23 +36,27 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          bun-version: latest
+          node-version: "20"
+          cache: npm
 
       - name: Install deps
-        run: bun install --frozen-lockfile
+        run: npm ci
 
       - name: Dependency audit (fail on high/critical)
         run: |
           set -o pipefail
-          bun audit --json > audit.json || true
+          npm audit --audit-level=high --json > audit.json || true
           node -e "
-            const a = require('./audit.json');
-            const sev = a.metadata?.vulnerabilities ?? {};
-            const bad = (sev.high ?? 0) + (sev.critical ?? 0);
-            console.log('Audit summary:', JSON.stringify(sev));
+            const fs = require('fs');
+            const raw = fs.readFileSync('audit.json', 'utf8');
+            let a;
+            try { a = JSON.parse(raw); } catch { console.error('FAIL: could not parse audit.json'); process.exit(1); }
+            const meta = a.metadata?.vulnerabilities ?? {};
+            const bad = (meta.high ?? 0) + (meta.critical ?? 0);
+            console.log('Audit summary:', JSON.stringify(meta));
             if (bad > 0) { console.error('FAIL: ' + bad + ' high/critical advisories'); process.exit(1); }
           "
 
@@ -45,7 +68,7 @@ jobs:
           args: detect --no-banner --redact --exit-code 1
 
       - name: Lovable scan-results gate
-        if: ${{ !contains(github.event.pull_request.labels.*.name, 'security-gate-bypass') }}
+        if: ${{ github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'security-gate-bypass') }}
         env:
           LOVABLE_API_KEY: ${{ secrets.LOVABLE_API_KEY }}
           LOVABLE_PROJECT_ID: ${{ secrets.LOVABLE_PROJECT_ID }}

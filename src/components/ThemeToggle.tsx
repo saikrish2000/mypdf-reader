@@ -1,5 +1,5 @@
 import React from 'react';
-import { Moon, Sun, BookOpen, Contrast, Check } from 'lucide-react';
+import { Moon, Sun, Contrast, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { THEMES, type Theme } from '@/hooks/useTheme';
 import {
@@ -22,7 +22,6 @@ interface ThemeToggleProps {
 const THEME_ICONS: Record<Theme, React.ComponentType<{ className?: string }>> = {
   light: Sun,
   dark: Moon,
-  sepia: BookOpen,
   contrast: Contrast,
 };
 

@@ -58,17 +58,17 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ isOpen, onClose }) => {
             <div className="rounded-xl bg-muted p-3 text-center">
               <Clock className="w-4 h-4 mx-auto text-accent mb-1" />
               <div className="text-lg font-bold text-foreground">{formatTime(todaySeconds)}</div>
-              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Today</div>
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground mt-0.5">Today</div>
             </div>
             <div className="rounded-xl bg-muted p-3 text-center">
               <Flame className="w-4 h-4 mx-auto text-orange-500 mb-1" />
               <div className="text-lg font-bold text-foreground">{current}</div>
-              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Streak</div>
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground mt-0.5">Streak</div>
             </div>
             <div className="rounded-xl bg-muted p-3 text-center">
               <BookOpen className="w-4 h-4 mx-auto text-accent mb-1" />
               <div className="text-lg font-bold text-foreground">{longest}</div>
-              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Longest</div>
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground mt-0.5">Longest</div>
             </div>
           </div>
 

@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "kind": "html",
+  "title": "mypdf-reader — Study & Exam Prep Workspace",
+  "entry": "mypdf-reader.html",
+  "renderer": "html",
+  "status": "complete",
+  "exports": [
+    "html",
+    "pdf",
+    "zip"
+  ],
+  "primary": true,
+  "createdAt": "2026-06-24T08:56:13.936Z",
+  "updatedAt": "2026-06-24T08:56:13.946Z",
+  "sourceSkillId": "agent-browser",
+  "designSystemId": "default",
+  "metadata": {
+    "identifier": "mypdf-reader",
+    "artifactType": "text/html",
+    "inferred": false
+  }
+}

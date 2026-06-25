@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, Sparkles, Loader2, RefreshCw, AlertTriangle } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import rehypeSanitize from 'rehype-sanitize';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
@@ -12,6 +13,7 @@ interface Props {
   isLoading: boolean;
   error: string | null;
   onRegenerate: () => void;
+  embedded?: boolean;
 }
 
 const SummaryPanel: React.FC<Props> = ({
@@ -22,19 +24,16 @@ const SummaryPanel: React.FC<Props> = ({
   isLoading,
   error,
   onRegenerate,
+  embedded = false,
 }) => {
   const isRateLimit = !!error && /busy|rate limit|try again/i.test(error);
 
-  return (
-    <aside
-      className={cn(
-        'fixed top-0 right-0 z-40 h-full w-full sm:w-96 bg-card border-l border-border shadow-2xl',
-        'transition-transform duration-300 ease-in-out flex flex-col',
-        isOpen ? 'translate-x-0' : 'translate-x-full'
-      )}
-      aria-hidden={!isOpen}
-    >
-      <header className="flex items-center justify-between p-4 border-b border-border">
+  if (!embedded && !isOpen) return null;
+
+  const body = (
+    <>
+      {!embedded && (
+      <header className="flex items-center justify-between p-4 border-b border-border shrink-0">
         <div className="flex items-center gap-2 min-w-0">
           <div className="p-1.5 rounded-md bg-accent/10 shrink-0">
             <Sparkles className="w-4 h-4 text-accent" />
@@ -64,6 +63,21 @@ const SummaryPanel: React.FC<Props> = ({
           </button>
         </div>
       </header>
+      )}
+      {embedded && (
+        <div className="flex items-center justify-between px-3 py-2 border-b border-border shrink-0">
+          <p className="text-xs text-muted-foreground">Page {pageNumber}</p>
+          <button
+            onClick={onRegenerate}
+            disabled={isLoading}
+            className="p-1.5 rounded-md hover:bg-secondary"
+            title="Regenerate"
+            aria-label="Regenerate summary"
+          >
+            <RefreshCw className={cn('w-3.5 h-3.5 text-muted-foreground', isLoading && 'animate-spin')} />
+          </button>
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto p-4">
         {isLoading && (
@@ -114,7 +128,7 @@ const SummaryPanel: React.FC<Props> = ({
 
         {!isLoading && !error && summary && (
           <div className="prose prose-sm dark:prose-invert max-w-none text-foreground">
-            <ReactMarkdown>{summary}</ReactMarkdown>
+            <ReactMarkdown rehypePlugins={[rehypeSanitize]}>{summary}</ReactMarkdown>
           </div>
         )}
 
@@ -124,6 +138,23 @@ const SummaryPanel: React.FC<Props> = ({
           </div>
         )}
       </div>
+    </>
+  );
+
+  if (embedded) {
+    return <div className="flex flex-col flex-1 min-h-0 overflow-hidden">{body}</div>;
+  }
+
+  return (
+    <aside
+      className={cn(
+        'fixed top-0 right-0 z-40 h-full w-full sm:w-96 bg-card border-l border-border shadow-2xl',
+        'transition-transform duration-300 ease-in-out flex flex-col',
+        isOpen ? 'translate-x-0' : 'translate-x-full',
+      )}
+      aria-hidden={!isOpen}
+    >
+      {body}
     </aside>
   );
 };

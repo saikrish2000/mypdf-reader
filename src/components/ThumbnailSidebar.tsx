@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import * as pdfjsLib from 'pdfjs-dist';
+import { pdfjsLib } from '@/lib/pdfjs';
 import { PanelLeftClose, PanelLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -10,6 +10,7 @@ interface ThumbnailSidebarProps {
   onPageSelect: (page: number) => void;
   isOpen: boolean;
   onToggle: () => void;
+  navigationLocked?: boolean;
 }
 
 const THUMB_SCALE = 0.3;
@@ -21,14 +22,16 @@ const ThumbnailSidebar: React.FC<ThumbnailSidebarProps> = ({
   onPageSelect,
   isOpen,
   onToggle,
+  navigationLocked = false,
 }) => {
   const [thumbnails, setThumbnails] = useState<Map<number, string>>(new Map());
   const containerRef = useRef<HTMLDivElement>(null);
   const activeRef = useRef<HTMLButtonElement>(null);
+  const thumbnailsRef = useRef<Map<number, string>>(new Map());
 
   // Render thumbnails lazily
   const renderThumbnail = useCallback(async (pageNum: number) => {
-    if (!pdfDoc || thumbnails.has(pageNum)) return;
+    if (!pdfDoc || thumbnailsRef.current.has(pageNum)) return;
     try {
       const page = await pdfDoc.getPage(pageNum);
       const viewport = page.getViewport({ scale: THUMB_SCALE });
@@ -38,17 +41,17 @@ const ThumbnailSidebar: React.FC<ThumbnailSidebarProps> = ({
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
       await page.render({ canvasContext: ctx, viewport }).promise;
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
-      setThumbnails(prev => new Map(prev).set(pageNum, dataUrl));
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+      thumbnailsRef.current.set(pageNum, dataUrl);
+      setThumbnails(new Map(thumbnailsRef.current));
     } catch {
       // ignore render errors
     }
-  }, [pdfDoc, thumbnails]);
+  }, [pdfDoc]);
 
   // Render visible thumbnails on open
   useEffect(() => {
     if (!isOpen || !pdfDoc) return;
-    // Render first batch
     const batch = Math.min(totalPages, 20);
     for (let i = 1; i <= batch; i++) {
       renderThumbnail(i);
@@ -75,33 +78,19 @@ const ThumbnailSidebar: React.FC<ThumbnailSidebarProps> = ({
 
   return (
     <>
-      {/* Toggle button when closed */}
-      {!isOpen && (
-        <button
-          onClick={onToggle}
-          className={cn(
-            "fixed left-3 top-1/2 -translate-y-1/2 z-20",
-            "p-2 rounded-lg bg-toolbar text-toolbar-foreground",
-            "shadow-lg hover:bg-toolbar/90 transition-all",
-            "hidden sm:flex"
-          )}
-          title="Show thumbnails"
-        >
-          <PanelLeft className="w-5 h-5" />
-        </button>
-      )}
-
       {/* Sidebar */}
       <div
         className={cn(
-          "fixed left-0 top-0 bottom-0 z-40 flex flex-col",
+          "fixed left-0 z-40 flex flex-col",
           "bg-card border-r border-border shadow-lg",
           "transition-all duration-300 ease-out",
-          isOpen ? "w-64 sm:w-48 translate-x-0" : "w-0 -translate-x-full"
+          isOpen ? "w-64 sm:w-52 translate-x-0" : "w-0 -translate-x-full overflow-hidden pointer-events-none"
         )}
+        style={{ top: 'var(--toolbar-height, 60px)', bottom: 0 }}
+        aria-hidden={!isOpen}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-3 py-3 border-b border-border">
+        <div className="flex items-center justify-between px-3 py-3 border-b border-border shrink-0">
           <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
             Pages
           </span>
@@ -120,10 +109,12 @@ const ThumbnailSidebar: React.FC<ThumbnailSidebarProps> = ({
             <button
               key={pageNum}
               ref={pageNum === currentPage ? activeRef : undefined}
-              onClick={() => onPageSelect(pageNum)}
+              onClick={() => !navigationLocked && onPageSelect(pageNum)}
+              disabled={navigationLocked}
               className={cn(
                 "w-full rounded-lg overflow-hidden transition-all duration-200",
                 "border-2 hover:border-accent/50",
+                navigationLocked && "opacity-50 cursor-not-allowed",
                 pageNum === currentPage
                   ? "border-accent ring-2 ring-accent/20"
                   : "border-transparent"

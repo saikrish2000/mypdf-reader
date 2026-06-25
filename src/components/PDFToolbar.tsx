@@ -1,10 +1,18 @@
-import React from 'react';
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, PanelLeft, X, Bookmark, Sparkles, MessageCircle, Search } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, PanelLeft, X, Bookmark, Sparkles, MessageCircle, Search, BookOpen, ScrollText, Home, ListTree } from 'lucide-react';
+import type { ReadingMode } from '@/hooks/usePDFStorage';
 import ThemeToggle from './ThemeToggle';
 import ReadAloudControls from './ReadAloudControls';
 import type { SpeechSettings } from '@/hooks/useSpeech';
 import type { Theme } from '@/hooks/useTheme';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+
+function promptSignIn(feature: string) {
+  toast.info(`Sign in to use ${feature}.`, {
+    action: { label: 'Sign in', onClick: () => { window.location.href = '/auth'; } },
+  });
+}
 
 interface PDFToolbarProps {
   currentPage: number;
@@ -34,7 +42,17 @@ interface PDFToolbarProps {
   chatOpen: boolean;
   onToggleSearch: () => void;
   searchOpen: boolean;
+  onToggleOutline?: () => void;
+  outlineOpen?: boolean;
   onClose: () => void;
+  onGoHome?: () => void;
+  speechUnsupported?: boolean;
+  readingMode: ReadingMode;
+  onReadingModeChange: (mode: ReadingMode) => void;
+  navigationLocked?: boolean;
+  aiEnabled?: boolean;
+  onPrevPage?: () => void;
+  onNextPage?: () => void;
 }
 
 const PDFToolbar: React.FC<PDFToolbarProps> = ({
@@ -65,17 +83,45 @@ const PDFToolbar: React.FC<PDFToolbarProps> = ({
   chatOpen,
   onToggleSearch,
   searchOpen,
+  onToggleOutline,
+  outlineOpen = false,
   onClose,
+  onGoHome,
+  speechUnsupported = false,
+  readingMode,
+  onReadingModeChange,
+  navigationLocked = false,
+  aiEnabled = true,
+  onPrevPage,
+  onNextPage,
 }) => {
+  const [pageInputValue, setPageInputValue] = useState(String(currentPage));
+
+  useEffect(() => {
+    setPageInputValue(String(currentPage));
+  }, [currentPage]);
+
   const handlePageInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value, 10);
-    if (!isNaN(value) && value >= 1 && value <= totalPages) {
-      onPageChange(value);
+    setPageInputValue(e.target.value);
+  };
+
+  const commitPageInput = () => {
+    if (navigationLocked) return;
+    const raw = pageInputValue.replace(/[^0-9-]/g, '');
+    const value = parseInt(raw, 10);
+    if (isNaN(value) || value < 1 || value > totalPages) {
+      if (value < 1 || value > totalPages) {
+        toast.error(`Page must be between 1 and ${totalPages}`);
+      }
+      setPageInputValue(String(currentPage));
+      return;
     }
+    onPageChange(value);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
+      commitPageInput();
       e.currentTarget.blur();
     }
   };
@@ -83,7 +129,7 @@ const PDFToolbar: React.FC<PDFToolbarProps> = ({
   const progress = totalPages > 0 ? (currentPage / totalPages) * 100 : 0;
 
   return (
-    <div className="pdf-toolbar sticky top-0 z-30">
+    <div className="pdf-toolbar sticky top-0 z-50">
       {/* Progress bar */}
       <div className="h-1 bg-toolbar-muted/30">
         <div
@@ -92,17 +138,31 @@ const PDFToolbar: React.FC<PDFToolbarProps> = ({
         />
       </div>
 
-      <div className="flex items-center justify-between gap-2 px-2 py-2 sm:px-6 sm:py-3">
+      <div className="flex items-center justify-between px-2 py-2 sm:px-4 lg:px-6 gap-1 overflow-x-auto"
+        style={{ minHeight: 'var(--toolbar-height, 60px)' }}
+      >
         {/* Left: sidebar toggle + file info */}
-        <div className="flex items-center gap-1.5 sm:gap-2 flex-1 min-w-0">
+        <div className="flex items-center gap-1 sm:gap-2 flex-1 min-w-0 mr-1 sm:mr-4">
+          {onGoHome && (
+            <button
+              type="button"
+              onClick={onGoHome}
+              className="flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg transition-colors shrink-0 hover:bg-toolbar-foreground/10"
+              title="Back to home"
+              aria-label="Back to home"
+            >
+              <Home className="w-4 h-4 text-toolbar-foreground" />
+            </button>
+          )}
           <button
             onClick={onToggleSidebar}
             className={cn(
-              "flex shrink-0 p-2 rounded-lg transition-colors min-h-[40px] min-w-[40px] items-center justify-center",
+              "flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg transition-colors shrink-0",
               "hover:bg-toolbar-foreground/10",
               sidebarOpen && "bg-toolbar-foreground/10"
             )}
             title={sidebarOpen ? 'Hide thumbnails' : 'Show thumbnails'}
+            aria-label={sidebarOpen ? 'Hide thumbnails' : 'Show thumbnails'}
           >
             <PanelLeft className="w-4 h-4 text-toolbar-foreground" />
           </button>
@@ -119,12 +179,12 @@ const PDFToolbar: React.FC<PDFToolbarProps> = ({
         {/* Center: navigation controls */}
         <div className="flex items-center gap-1 sm:gap-3 shrink-0">
           {/* Zoom controls */}
-          <div className="hidden md:flex items-center gap-1 mr-2">
+          <div className="hidden lg:flex items-center gap-1 mr-2">
             <button
               onClick={() => onScaleChange(Math.max(0.5, scale - 0.25))}
               disabled={scale <= 0.5}
               className={cn(
-                "p-2 rounded-lg transition-colors",
+                "flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg transition-colors",
                 "hover:bg-toolbar-foreground/10 disabled:opacity-40 disabled:cursor-not-allowed"
               )}
               title="Zoom out"
@@ -138,7 +198,7 @@ const PDFToolbar: React.FC<PDFToolbarProps> = ({
               onClick={() => onScaleChange(Math.min(3, scale + 0.25))}
               disabled={scale >= 3}
               className={cn(
-                "p-2 rounded-lg transition-colors",
+                "flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg transition-colors",
                 "hover:bg-toolbar-foreground/10 disabled:opacity-40 disabled:cursor-not-allowed"
               )}
               title="Zoom in"
@@ -149,10 +209,14 @@ const PDFToolbar: React.FC<PDFToolbarProps> = ({
 
           {/* Page navigation */}
           <button
-            onClick={() => onPageChange(currentPage - 1)}
-            disabled={currentPage <= 1}
+            onClick={() => {
+              if (navigationLocked) return;
+              if (onPrevPage) onPrevPage();
+              else onPageChange(currentPage - 1);
+            }}
+            disabled={currentPage <= 1 || navigationLocked}
             className={cn(
-              "p-2 rounded-lg transition-colors min-h-[40px] min-w-[40px] flex items-center justify-center",
+              "flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg transition-colors",
               "hover:bg-toolbar-foreground/10 disabled:opacity-40 disabled:cursor-not-allowed"
             )}
             title="Previous page"
@@ -165,14 +229,17 @@ const PDFToolbar: React.FC<PDFToolbarProps> = ({
               type="number"
               min={1}
               max={totalPages}
-              value={currentPage}
+              value={pageInputValue}
               onChange={handlePageInput}
               onKeyDown={handleKeyDown}
+              onBlur={commitPageInput}
+              disabled={navigationLocked}
               className={cn(
                 "w-12 sm:w-14 px-1.5 sm:px-2 py-1.5 text-center text-sm rounded-lg",
                 "bg-toolbar-foreground/10 text-toolbar-foreground",
                 "border border-transparent focus:border-accent focus:outline-none",
-                "transition-colors"
+                "transition-colors",
+                navigationLocked && "opacity-40 cursor-not-allowed",
               )}
             />
             <span className="text-xs sm:text-sm text-toolbar-muted whitespace-nowrap">
@@ -181,10 +248,14 @@ const PDFToolbar: React.FC<PDFToolbarProps> = ({
           </div>
 
           <button
-            onClick={() => onPageChange(currentPage + 1)}
-            disabled={currentPage >= totalPages}
+            onClick={() => {
+              if (navigationLocked) return;
+              if (onNextPage) onNextPage();
+              else onPageChange(currentPage + 1);
+            }}
+            disabled={currentPage >= totalPages || navigationLocked}
             className={cn(
-              "p-2 rounded-lg transition-colors min-h-[40px] min-w-[40px] flex items-center justify-center",
+              "flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg transition-colors",
               "hover:bg-toolbar-foreground/10 disabled:opacity-40 disabled:cursor-not-allowed"
             )}
             title="Next page"
@@ -194,38 +265,39 @@ const PDFToolbar: React.FC<PDFToolbarProps> = ({
         </div>
 
         {/* Right: bookmarks + theme toggle + close */}
-        <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
-          <div className="hidden sm:flex items-center gap-0.5">
-            <ReadAloudControls
-              isReading={isReading}
-              onToggleRead={onToggleRead}
-              voices={voices}
-              settings={speechSettings}
-              onSettingsChange={onSpeechSettingsChange}
-              continuous={continuousRead}
-              onContinuousChange={onContinuousChange}
-            />
-          </div>
+        <div className="flex items-center gap-0 sm:gap-1 ml-1 sm:ml-4 flex-shrink-0">
           <button
-            onClick={onToggleSearch}
+            onClick={() => onReadingModeChange(readingMode === 'scroll' ? 'flip' : 'scroll')}
             className={cn(
-              'p-2 rounded-lg transition-colors hover:bg-toolbar-foreground/10 min-h-[40px] min-w-[40px] flex items-center justify-center',
-              searchOpen && 'bg-toolbar-foreground/10'
+              'flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg transition-colors hover:bg-toolbar-foreground/10',
             )}
-            title="Search in document (Ctrl+F)"
+            title={readingMode === 'scroll' ? 'Switch to flip book view' : 'Switch to scroll view'}
+            aria-label={readingMode === 'scroll' ? 'Switch to flip book view' : 'Switch to scroll view'}
           >
-            <Search className={cn(
-              'w-4 h-4 text-toolbar-foreground',
-              searchOpen && 'text-accent'
-            )} />
-          </button>
-          <button
-            onClick={onSummarize}
-            className={cn(
-              'p-2 rounded-lg transition-colors hover:bg-toolbar-foreground/10 min-h-[40px] min-w-[40px] flex items-center justify-center',
-              summaryOpen && 'bg-toolbar-foreground/10'
+            {readingMode === 'scroll' ? (
+              <BookOpen className="w-4 h-4 text-toolbar-foreground" />
+            ) : (
+              <ScrollText className="w-4 h-4 text-toolbar-foreground" />
             )}
-            title="Summarize this page with AI"
+          </button>
+          <ReadAloudControls
+            isReading={isReading}
+            onToggleRead={onToggleRead}
+            voices={voices}
+            settings={speechSettings}
+            onSettingsChange={onSpeechSettingsChange}
+            continuous={continuousRead}
+            onContinuousChange={onContinuousChange}
+            unsupported={speechUnsupported}
+          />
+          <button
+            onClick={() => aiEnabled ? onSummarize() : promptSignIn('AI summary')}
+            className={cn(
+              'flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg transition-colors hover:bg-toolbar-foreground/10',
+              summaryOpen && 'bg-toolbar-foreground/10',
+              !aiEnabled && 'opacity-40',
+            )}
+            title={aiEnabled ? 'Summarize this page with AI' : 'Sign in to use AI summary'}
           >
             <Sparkles className={cn(
               'w-4 h-4 text-toolbar-foreground',
@@ -233,12 +305,13 @@ const PDFToolbar: React.FC<PDFToolbarProps> = ({
             )} />
           </button>
           <button
-            onClick={onToggleChat}
+            onClick={() => aiEnabled ? onToggleChat() : promptSignIn('AI chat')}
             className={cn(
-              'p-2 rounded-lg transition-colors hover:bg-toolbar-foreground/10 min-h-[40px] min-w-[40px] flex items-center justify-center',
-              chatOpen && 'bg-toolbar-foreground/10'
+              'flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg transition-colors hover:bg-toolbar-foreground/10',
+              chatOpen && 'bg-toolbar-foreground/10',
+              !aiEnabled && 'opacity-40',
             )}
-            title="Ask questions about this page"
+            title={aiEnabled ? 'Ask questions about this page' : 'Sign in to use AI chat'}
           >
             <MessageCircle className={cn(
               'w-4 h-4 text-toolbar-foreground',
@@ -246,9 +319,39 @@ const PDFToolbar: React.FC<PDFToolbarProps> = ({
             )} />
           </button>
           <button
+            onClick={onToggleSearch}
+            className={cn(
+              'flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg transition-colors hover:bg-toolbar-foreground/10',
+              searchOpen && 'bg-toolbar-foreground/10'
+            )}
+            title="Search document"
+            aria-label="Search document"
+          >
+            <Search className={cn(
+              'w-4 h-4 text-toolbar-foreground',
+              searchOpen && 'text-accent'
+            )} />
+          </button>
+          {onToggleOutline && (
+            <button
+              onClick={onToggleOutline}
+              className={cn(
+                'flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg transition-colors hover:bg-toolbar-foreground/10',
+                outlineOpen && 'bg-toolbar-foreground/10',
+              )}
+              title="Document outline"
+              aria-label="Document outline"
+            >
+              <ListTree className={cn(
+                'w-4 h-4 text-toolbar-foreground',
+                outlineOpen && 'text-accent',
+              )} />
+            </button>
+          )}
+          <button
             onClick={onToggleBookmarks}
             className={cn(
-              "p-2 rounded-lg transition-colors min-h-[40px] min-w-[40px] flex items-center justify-center",
+              "flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg transition-colors",
               "hover:bg-toolbar-foreground/10",
               bookmarksOpen && "bg-toolbar-foreground/10"
             )}
@@ -259,13 +362,11 @@ const PDFToolbar: React.FC<PDFToolbarProps> = ({
               isCurrentPageBookmarked && "fill-accent text-accent"
             )} />
           </button>
-          <div className="hidden sm:block">
-            <ThemeToggle theme={theme} onToggle={onToggleTheme} onSelect={onSelectTheme} variant="toolbar" />
-          </div>
+          <ThemeToggle theme={theme} onToggle={onToggleTheme} onSelect={onSelectTheme} variant="toolbar" />
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-toolbar-foreground/10 transition-colors min-h-[40px] min-w-[40px] flex items-center justify-center"
-            title="Close"
+            className="flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg hover:bg-toolbar-foreground/10 transition-colors"
+            title="Close and return to library"
           >
             <X className="w-4 h-4 text-toolbar-foreground" />
           </button>

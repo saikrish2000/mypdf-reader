@@ -16,6 +16,7 @@ export default defineConfig(({ mode }) => ({
     target: "es2022",
   },
   optimizeDeps: {
+    include: ["pdfjs-dist"],
     esbuildOptions: {
       target: "es2022",
     },

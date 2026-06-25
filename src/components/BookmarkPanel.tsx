@@ -22,6 +22,8 @@ interface BookmarkPanelProps {
   onGoToBookmark: (page: number) => void;
   isOpen: boolean;
   onClose: () => void;
+  syncState?: 'idle' | 'syncing' | 'synced' | 'error' | 'offline';
+  navigationLocked?: boolean;
 }
 
 const BookmarkPanel: React.FC<BookmarkPanelProps> = ({
@@ -33,6 +35,8 @@ const BookmarkPanel: React.FC<BookmarkPanelProps> = ({
   onGoToBookmark,
   isOpen,
   onClose,
+  syncState = 'offline',
+  navigationLocked = false,
 }) => {
   const [newLabel, setNewLabel] = useState('');
 
@@ -50,8 +54,8 @@ const BookmarkPanel: React.FC<BookmarkPanelProps> = ({
 
   return (
     <div className={cn(
-      "fixed right-0 top-0 bottom-0 z-40 flex flex-col",
-      "w-full sm:w-[300px] max-w-full animate-fade-in",
+      "fixed right-0 top-0 bottom-0 z-20 flex flex-col",
+      "w-full sm:w-[280px] max-h-screen animate-fade-in",
       "bookmark-panel"
     )}>
       {/* Leather-textured header */}
@@ -132,7 +136,7 @@ const BookmarkPanel: React.FC<BookmarkPanelProps> = ({
             <div className="flex gap-3 mb-4">
               {[0, 1, 2].map(i => (
                 <div key={i} className={cn(
-                  "w-4 rounded-sm opacity-20",
+                  "w-4 rounded-sm opacity-20 relative",
                   i === 0 ? "h-10 bg-red-500" : i === 1 ? "h-8 bg-amber-500" : "h-12 bg-blue-500"
                 )}>
                   <div className="absolute bottom-0 left-0 right-0 h-2"
@@ -153,12 +157,13 @@ const BookmarkPanel: React.FC<BookmarkPanelProps> = ({
                 <div
                   key={bm.page}
                   className={cn(
-                    "group relative flex items-stretch cursor-pointer",
+                    "group relative flex items-stretch",
+                    navigationLocked ? "cursor-not-allowed opacity-50" : "cursor-pointer",
                     "rounded-md overflow-hidden transition-all duration-200",
-                    "hover:translate-x-1 hover:shadow-md",
+                    !navigationLocked && "hover:translate-x-1 hover:shadow-md",
                     isActive && "translate-x-1 shadow-md"
                   )}
-                  onClick={() => onGoToBookmark(bm.page)}
+                  onClick={() => !navigationLocked && onGoToBookmark(bm.page)}
                 >
                   {/* Ribbon tab */}
                   <div className={cn(
@@ -191,20 +196,20 @@ const BookmarkPanel: React.FC<BookmarkPanelProps> = ({
                   </div>
 
                   {/* Remove — appears on hover like peeling off */}
-                  <button
-                    onClick={e => {
-                      e.stopPropagation();
-                      onRemoveBookmark(bm.page);
-                    }}
-                    className={cn(
-                      "absolute right-1 top-1/2 -translate-y-1/2",
-                      "w-6 h-6 rounded-full flex items-center justify-center",
-                      "bg-destructive/90 text-destructive-foreground",
-                      "opacity-0 scale-75 group-hover:opacity-100 group-hover:scale-100",
-                      "transition-all duration-200 shadow-sm"
-                    )}
-                    title="Remove bookmark"
-                  >
+                    <button
+                      onClick={e => {
+                        e.stopPropagation();
+                        onRemoveBookmark(bm.page);
+                      }}
+                      className={cn(
+                        "absolute right-1 top-1/2 -translate-y-1/2",
+                        "w-7 h-7 rounded-full flex items-center justify-center",
+                        "bg-destructive/90 text-destructive-foreground",
+                        "opacity-60 md:opacity-0 md:scale-75 md:group-hover:opacity-100 md:group-hover:scale-100",
+                        "transition-all duration-200 shadow-sm"
+                      )}
+                      title="Remove bookmark"
+                    >
                     <X className="w-3 h-3" />
                   </button>
                 </div>
@@ -218,6 +223,13 @@ const BookmarkPanel: React.FC<BookmarkPanelProps> = ({
       <div className="px-4 py-2.5 border-t border-border">
         <p className="text-[10px] text-muted-foreground/50 text-center font-serif italic">
           {bookmarks.length} bookmark{bookmarks.length !== 1 ? 's' : ''} · Ctrl+B to toggle
+        </p>
+        <p className="text-[10px] text-center mt-1 text-muted-foreground/70">
+          {syncState === 'syncing' && 'Syncing bookmarks…'}
+          {syncState === 'synced' && 'Synced to cloud'}
+          {syncState === 'offline' && 'Offline (local only)'}
+          {syncState === 'error' && 'Sync failed — saved locally'}
+          {syncState === 'idle' && 'Bookmarks'}
         </p>
       </div>
     </div>

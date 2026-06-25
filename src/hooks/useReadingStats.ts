@@ -5,7 +5,7 @@ const TICK_MS = 5000;
 const IDLE_MS = 60_000;
 
 interface PersistedStats {
-  daily: Record<string, number>; // YYYY-MM-DD -> seconds read
+  daily: Record<string, number>;
   perDocument: Record<
     string,
     {
@@ -30,6 +30,7 @@ function loadStats(): PersistedStats {
       perDocument: parsed.perDocument ?? {},
     };
   } catch {
+    // ignore corrupt localStorage
     return { daily: {}, perDocument: {} };
   }
 }
@@ -37,7 +38,9 @@ function loadStats(): PersistedStats {
 function saveStats(s: PersistedStats) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
-  } catch {}
+  } catch {
+    // ignore localStorage write failures
+  }
 }
 
 function computeStreaks(daily: Record<string, number>): { current: number; longest: number } {
@@ -49,9 +52,11 @@ function computeStreaks(daily: Record<string, number>): { current: number; longe
   let longest = 1;
   let run = 1;
   for (let i = 1; i < days.length; i++) {
-    const prev = new Date(days[i - 1]).getTime();
-    const cur = new Date(days[i]).getTime();
-    const diffDays = Math.round((cur - prev) / (24 * 60 * 60 * 1000));
+    const prev = days[i - 1];
+    const cur = days[i];
+    const prevDate = new Date(prev + 'T00:00:00Z').getTime();
+    const curDate = new Date(cur + 'T00:00:00Z').getTime();
+    const diffDays = Math.round((curDate - prevDate) / (24 * 60 * 60 * 1000));
     if (diffDays === 1) {
       run += 1;
       longest = Math.max(longest, run);
@@ -60,7 +65,6 @@ function computeStreaks(daily: Record<string, number>): { current: number; longe
     }
   }
 
-  // current streak: count back from today/yesterday
   const today = todayKey();
   const yesterday = todayKey(new Date(Date.now() - 24 * 60 * 60 * 1000));
   const last = days[days.length - 1];
@@ -75,39 +79,43 @@ function computeStreaks(daily: Record<string, number>): { current: number; longe
   return { current, longest };
 }
 
-/**
- * Tracks reading time globally + per document.
- * Pass null fileName to read stats without recording.
- */
 export function useReadingStats(fileName: string | null) {
   const [stats, setStats] = useState<PersistedStats>(() => loadStats());
   const lastActivityRef = useRef<number>(Date.now());
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Touch activity on user interaction
   useEffect(() => {
     if (!fileName) return;
     const onActivity = () => {
       lastActivityRef.current = Date.now();
     };
+    let lastMouseMove = 0;
+    const onThrottledMouseMove = () => {
+      const now = Date.now();
+      if (now - lastMouseMove > 500) {
+        lastMouseMove = now;
+        onActivity();
+      }
+    };
     window.addEventListener('scroll', onActivity, { passive: true, capture: true });
-    window.addEventListener('mousemove', onActivity);
+    window.addEventListener('mousemove', onThrottledMouseMove);
     window.addEventListener('keydown', onActivity);
     window.addEventListener('touchstart', onActivity, { passive: true });
     window.addEventListener('click', onActivity);
     return () => {
       window.removeEventListener('scroll', onActivity, true);
-      window.removeEventListener('mousemove', onActivity);
+      window.removeEventListener('mousemove', onThrottledMouseMove);
       window.removeEventListener('keydown', onActivity);
       window.removeEventListener('touchstart', onActivity);
       window.removeEventListener('click', onActivity);
     };
   }, [fileName]);
 
-  // Tick: record seconds while tab visible AND recent activity
   useEffect(() => {
     if (!fileName) return;
     const seconds = TICK_MS / 1000;
-    const interval = window.setInterval(() => {
+
+    const tick = () => {
       if (document.visibilityState !== 'visible') return;
       if (Date.now() - lastActivityRef.current > IDLE_MS) return;
 
@@ -133,8 +141,30 @@ export function useReadingStats(fileName: string | null) {
         saveStats(next);
         return next;
       });
-    }, TICK_MS);
-    return () => window.clearInterval(interval);
+    };
+
+    const stop = () => {
+      if (intervalRef.current !== null) {
+        window.clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+
+    const onVisibilityChange = () => {
+      if (document.hidden) {
+        stop();
+      } else {
+        intervalRef.current = window.setInterval(tick, TICK_MS);
+      }
+    };
+
+    intervalRef.current = window.setInterval(tick, TICK_MS);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    return () => {
+      stop();
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
   }, [fileName]);
 
   const recordPageVisit = useCallback(

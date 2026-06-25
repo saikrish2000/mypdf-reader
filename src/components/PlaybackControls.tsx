@@ -32,24 +32,23 @@ const PlaybackControls: React.FC<Props> = ({
   return (
     <div
       className={cn(
-        'fixed bottom-6 left-1/2 -translate-x-1/2 z-40',
-        'flex items-center gap-1 px-3 py-2 rounded-full',
+        'fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-40',
+        'flex items-center gap-0.5 sm:gap-1 px-2 sm:px-3 py-1.5 sm:py-2 rounded-full',
         'bg-toolbar text-toolbar-foreground shadow-2xl border border-border/20',
-        'animate-fade-in'
+        'animate-fade-in max-w-[95vw]'
       )}
     >
-      <div className="flex items-center gap-2 px-2 text-xs text-toolbar-muted">
+      <div className="hidden sm:flex items-center gap-2 px-2 text-xs text-toolbar-muted">
         <Volume2 className="w-3.5 h-3.5 text-accent" />
         <span>P{currentPage}/{totalPages}</span>
         <span className="opacity-60">· {rate}x</span>
       </div>
 
-      <div className="w-px h-5 bg-toolbar-foreground/20 mx-1" />
-
       <button
         onClick={onSkipBack}
-        className="p-2 rounded-full hover:bg-toolbar-foreground/10 transition-colors"
+        className="flex items-center justify-center min-w-[44px] min-h-[44px] w-11 h-11 rounded-full hover:bg-toolbar-foreground/10 transition-colors"
         title="Back 10 seconds"
+        aria-label="Skip back 10 seconds"
       >
         <SkipBack className="w-4 h-4" />
       </button>
@@ -57,32 +56,35 @@ const PlaybackControls: React.FC<Props> = ({
       <button
         onClick={onPlayPause}
         className={cn(
-          'p-2.5 rounded-full transition-colors',
+          'flex items-center justify-center min-w-[48px] min-h-[48px] w-12 h-12 rounded-full transition-colors',
           isPlaying && !isPaused
             ? 'bg-accent text-accent-foreground hover:opacity-90'
             : 'bg-accent/20 text-accent hover:bg-accent/30'
         )}
         title={isPlaying && !isPaused ? 'Pause' : 'Resume'}
+        aria-label={isPlaying && !isPaused ? 'Pause reading' : 'Resume reading'}
       >
         {isPlaying && !isPaused ? (
-          <Pause className="w-4 h-4" />
+          <Pause className="w-5 h-5" />
         ) : (
-          <Play className="w-4 h-4" />
+          <Play className="w-5 h-5" />
         )}
       </button>
 
       <button
         onClick={onSkipForward}
-        className="p-2 rounded-full hover:bg-toolbar-foreground/10 transition-colors"
+        className="flex items-center justify-center min-w-[44px] min-h-[44px] w-11 h-11 rounded-full hover:bg-toolbar-foreground/10 transition-colors"
         title="Forward 10 seconds"
+        aria-label="Skip forward 10 seconds"
       >
         <SkipForward className="w-4 h-4" />
       </button>
 
       <button
         onClick={onStop}
-        className="p-2 rounded-full hover:bg-destructive/20 hover:text-destructive transition-colors"
+        className="flex items-center justify-center min-w-[44px] min-h-[44px] w-11 h-11 rounded-full hover:bg-destructive/20 hover:text-destructive transition-colors"
         title="Stop"
+        aria-label="Stop reading"
       >
         <Square className="w-4 h-4" />
       </button>

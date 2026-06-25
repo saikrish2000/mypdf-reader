@@ -5,6 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export interface WordDefinition {
   word: string;
+  canonical?: string;
   phonetic?: string;
   partOfSpeech?: string;
   meanings?: { definition: string; example?: string; domain?: string }[];
@@ -125,6 +126,9 @@ const WordDefinitionPanel: React.FC<Props> = ({
             <div>
               <div className="flex items-baseline gap-3 flex-wrap">
                 <span className="text-2xl font-bold text-foreground">{definition.word}</span>
+                {definition.canonical && (
+                  <span className="text-sm text-muted-foreground">(from <em>{definition.canonical}</em>)</span>
+                )}
                 {definition.phonetic && (
                   <span className="text-sm text-muted-foreground font-mono">{definition.phonetic}</span>
                 )}
@@ -216,7 +220,7 @@ const WordDefinitionPanel: React.FC<Props> = ({
         {/* Empty state */}
         {!isLoading && !error && !definition && (
           <p className="text-sm text-muted-foreground text-center mt-8 px-4 leading-relaxed">
-            Select a single word in the PDF and tap <strong>Define</strong> to look it up.
+            Select text in the PDF and tap <strong>Know Meaning</strong> to look it up.
           </p>
         )}
       </div>

@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { requireAuthenticatedUser, unauthorizedResponse } from "../_shared/requireAuth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -41,6 +42,7 @@ async function loadAllFindings(): Promise<RawFinding[]> {
       );
       if (res.ok) {
         const data = await res.json().catch(() => ({}));
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const items: any[] = Array.isArray(data) ? data : data.findings ?? [];
         for (const item of items) {
           findings.push({
@@ -71,15 +73,8 @@ async function loadAllFindings(): Promise<RawFinding[]> {
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
-  // Lightweight auth: require the caller to present a JWT (verify_jwt is off
-  // for Lovable-managed functions, so we check the header is present).
-  const authHeader = req.headers.get("Authorization");
-  if (!authHeader?.startsWith("Bearer ")) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
+  const user = await requireAuthenticatedUser(req);
+  if (!user) return unauthorizedResponse(corsHeaders);
 
   try {
     if (req.method === "GET") {

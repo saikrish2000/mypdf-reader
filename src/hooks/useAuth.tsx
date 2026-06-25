@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -16,11 +16,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get the current session first, then subscribe to future changes.
-    // This is the correct pattern for Supabase v2 — onAuthStateChange alone
-    // does NOT fire synchronously on mount, so loading would stay true forever.
+    let cancelled = false;
+    const timeout = setTimeout(() => {
+      if (!cancelled) setLoading(false);
+    }, 5000);
+
     supabase.auth.getSession().then(({ data }) => {
+      if (cancelled) return;
       setSession(data.session);
+    }).catch(() => {
+      // getSession failed — stay logged out
+    }).finally(() => {
+      if (cancelled) return;
+      clearTimeout(timeout);
       setLoading(false);
     });
 
@@ -28,7 +36,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSession(s);
       setLoading(false);
     });
-    return () => sub.subscription.unsubscribe();
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
   const signOut = async () => {

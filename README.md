@@ -1,73 +1,71 @@
-# Welcome to your Lovable project
+# PDF Reader
 
-## Project info
+A browser-based PDF reader with local progress, bookshelf library, AI-assisted reading (summarize, chat), highlights, bookmarks, and three reading themes (Light, Dark, High Contrast).
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Quick start
 
-## How can I edit this code?
+The app lives in the **`mypdf-reader`** folder (not the repo root).
 
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+```bash
+cd mypdf-reader
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+Open the URL Vite prints (usually `http://localhost:8080`).
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Environment variables
 
-**Use GitHub Codespaces**
+Create `mypdf-reader/.env`:
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+```env
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+```
 
-## What technologies are used for this project?
+Required for sign-in, cloud bookmarks, annotations, and AI features (summarize/chat). Uploading and reading PDFs works without auth using local storage.
 
-This project is built with:
+For Google OAuth and email auth setup, see [docs/AUTH_SETUP.md](docs/AUTH_SETUP.md).
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Routes
 
-## How can I deploy this project?
+| Path | Description |
+|------|-------------|
+| `/` | Landing — hero, upload, feature overview |
+| `/library` | Bookshelf, search, upload |
+| `/read/:docId` | PDF reader |
+| `/auth` | Sign in / sign up |
+| `/security` | Security findings (authenticated) |
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+## Scripts
 
-## Can I connect a custom domain to my Lovable project?
+```bash
+npm run dev      # Development server
+npm run build    # Production build
+npm run test     # Vitest unit tests
+npm run preview  # Preview production build
+```
 
-Yes, you can!
+## Supabase edge functions
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+Deploy after changing auth or AI functions:
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+```bash
+supabase functions deploy summarize-page
+supabase functions deploy chat-page
+supabase functions deploy security-findings
+```
+
+Set `LOVABLE_API_KEY` in Supabase secrets for AI endpoints.
+
+## Tech stack
+
+- Vite + React 18 + TypeScript
+- Tailwind CSS + shadcn/ui
+- pdf.js for rendering
+- Supabase (auth, annotations, edge functions)
+
+## Data storage
+
+- **PDF files:** IndexedDB cache (max 20 files, LRU eviction)
+- **Progress & bookmarks:** `localStorage` when logged out; synced to Supabase when signed in

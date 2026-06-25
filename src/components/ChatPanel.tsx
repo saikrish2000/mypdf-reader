@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { X, MessageCircle, Send, Loader2, AlertTriangle, RefreshCw, Trash2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import rehypeSanitize from 'rehype-sanitize';
 import { cn } from '@/lib/utils';
 
 export interface ChatMessage {
@@ -18,6 +19,8 @@ interface Props {
   onSend: (text: string) => void;
   onRetry: () => void;
   onClear: () => void;
+  embedded?: boolean;
+  scopeLabel?: string;
 }
 
 const ChatPanel: React.FC<Props> = ({
@@ -30,6 +33,8 @@ const ChatPanel: React.FC<Props> = ({
   onSend,
   onRetry,
   onClear,
+  embedded = false,
+  scopeLabel,
 }) => {
   const [input, setInput] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -64,15 +69,11 @@ const ChatPanel: React.FC<Props> = ({
 
   const isRateLimit = !!error && /busy|rate limit|try again/i.test(error);
 
-  return (
-    <aside
-      className={cn(
-        'fixed top-0 right-0 z-40 h-full w-full sm:w-[420px] bg-card border-l border-border shadow-2xl',
-        'transition-transform duration-300 ease-in-out flex flex-col',
-        isOpen ? 'translate-x-0' : 'translate-x-full'
-      )}
-      aria-hidden={!isOpen}
-    >
+  if (!embedded && !isOpen) return null;
+
+  const content = (
+    <>
+      {!embedded && (
       <header className="flex items-center justify-between p-4 border-b border-border shrink-0">
         <div className="flex items-center gap-2 min-w-0">
           <div className="p-1.5 rounded-md bg-accent/10 shrink-0">
@@ -80,7 +81,9 @@ const ChatPanel: React.FC<Props> = ({
           </div>
           <div className="min-w-0">
             <h3 className="text-sm font-semibold text-foreground truncate">Ask this page</h3>
-            <p className="text-xs text-muted-foreground">Page {pageNumber} • answers from current page only</p>
+            <p className="text-xs text-muted-foreground">
+              {scopeLabel ?? `Page ${pageNumber} • answers from current page only`}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-1 shrink-0">
@@ -105,6 +108,7 @@ const ChatPanel: React.FC<Props> = ({
           </button>
         </div>
       </header>
+      )}
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 && !isStreaming && !error && (
@@ -152,7 +156,7 @@ const ChatPanel: React.FC<Props> = ({
             >
               {m.role === 'assistant' ? (
                 <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1.5 prose-ul:my-1.5 prose-ol:my-1.5">
-                  <ReactMarkdown>{m.content || '…'}</ReactMarkdown>
+                  <ReactMarkdown rehypePlugins={[rehypeSanitize]}>{m.content || '…'}</ReactMarkdown>
                 </div>
               ) : (
                 <p className="whitespace-pre-wrap leading-relaxed">{m.content}</p>
@@ -161,7 +165,7 @@ const ChatPanel: React.FC<Props> = ({
           </div>
         ))}
 
-        {isStreaming && messages[messages.length - 1]?.role !== 'assistant' && (
+        {isStreaming && (messages.length === 0 || messages[messages.length - 1]?.role !== 'assistant') && (
           <div className="flex justify-start">
             <div className="bg-secondary rounded-2xl rounded-bl-sm px-3.5 py-2.5">
               <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
@@ -232,6 +236,23 @@ const ChatPanel: React.FC<Props> = ({
           </button>
         </div>
       </form>
+    </>
+  );
+
+  if (embedded) {
+    return <div className="flex flex-col flex-1 min-h-0">{content}</div>;
+  }
+
+  return (
+    <aside
+      className={cn(
+        'fixed top-0 right-0 z-40 h-full w-full sm:w-[420px] bg-card border-l border-border shadow-2xl',
+        'transition-transform duration-300 ease-in-out flex flex-col',
+        isOpen ? 'translate-x-0' : 'translate-x-full',
+      )}
+      aria-hidden={!isOpen}
+    >
+      {content}
     </aside>
   );
 };

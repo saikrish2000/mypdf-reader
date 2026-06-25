@@ -1,8 +1,9 @@
 import type { Config } from "tailwindcss";
+import tailwindcssAnimate from "tailwindcss-animate";
 
 export default {
   darkMode: ["class"],
-  content: ["./pages/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./app/**/*.{ts,tsx}", "./src/**/*.{ts,tsx}"],
+  content: ["./src/**/*.{ts,tsx}"],
   prefix: "",
   theme: {
     container: {
@@ -13,6 +14,11 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ["Inter", "system-ui", "sans-serif"],
+        serif: ["Playfair Display", "Georgia", "serif"],
+        mono: ["JetBrains Mono", "monospace"],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -69,8 +75,9 @@ export default {
         },
       },
       borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
+        "2xl": "var(--radius-2xl)",
+        lg: "var(--radius-lg)",
+        md: "var(--radius)",
         sm: "calc(var(--radius) - 4px)",
       },
       keyframes: {
@@ -104,6 +111,21 @@ export default {
           "50%": { transform: "rotateY(12deg)", opacity: "0.7" },
           "100%": { transform: "rotateY(0deg)", opacity: "1" },
         },
+        "pulse-border": {
+          "0%, 100%": { borderColor: "hsl(var(--accent) / 0.3)" },
+          "50%": { borderColor: "hsl(var(--accent) / 0.8)" },
+        },
+        "shimmer": {
+          "0%": { backgroundPosition: "-200% 0" },
+          "100%": { backgroundPosition: "200% 0" },
+        },
+        "mesh-shift": {
+          "0%": { transform: "translate(0, 0) scale(1) rotate(0deg)" },
+          "25%": { transform: "translate(2%, -1%) scale(1.02) rotate(0.5deg)" },
+          "50%": { transform: "translate(-1%, 2%) scale(0.98) rotate(-0.5deg)" },
+          "75%": { transform: "translate(1%, -2%) scale(1.01) rotate(0.3deg)" },
+          "100%": { transform: "translate(0, 0) scale(1) rotate(0deg)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -113,8 +135,11 @@ export default {
         "slide-up": "slide-up 0.4s ease-out",
         "flip-left": "flip-left 0.35s ease-out",
         "flip-right": "flip-right 0.35s ease-out",
+        "pulse-border": "pulse-border 2s ease-in-out infinite",
+        "shimmer": "shimmer 2s linear infinite",
+        "mesh-shift": "mesh-shift 12s ease-in-out infinite",
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [tailwindcssAnimate],
 } satisfies Config;

@@ -1,15 +1,16 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Search, X, Loader2 } from 'lucide-react';
+import { Search, X, Loader2, CaseSensitive } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { SearchResult } from '@/hooks/useFullTextSearch';
 
 interface SearchPanelProps {
   isOpen: boolean;
   onClose: () => void;
-  onSearch: (query: string) => SearchResult[];
+  onSearch: (query: string, caseSensitive?: boolean) => SearchResult[];
   indexReady: boolean;
   indexProgress: number;
   onJumpToPage: (page: number) => void;
+  navigationLocked?: boolean;
 }
 
 const SearchPanel: React.FC<SearchPanelProps> = ({
@@ -19,9 +20,11 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
   indexReady,
   indexProgress,
   onJumpToPage,
+  navigationLocked = false,
 }) => {
   const [query, setQuery] = useState('');
   const [debounced, setDebounced] = useState('');
+  const [caseSensitive, setCaseSensitive] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -33,15 +36,15 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
     return () => clearTimeout(t);
   }, [query]);
 
-  const results = useMemo(() => (debounced.trim() ? onSearch(debounced) : []), [debounced, onSearch, indexReady]);
+  const results = useMemo(() => (debounced.trim() ? onSearch(debounced, caseSensitive) : []), [debounced, onSearch, caseSensitive]);
 
   if (!isOpen) return null;
 
   const highlightSnippet = (snippet: string, q: string) => {
     if (!q) return snippet;
-    const lower = snippet.toLowerCase();
-    const needle = q.toLowerCase();
-    const idx = lower.indexOf(needle);
+    const haystack = caseSensitive ? snippet : snippet.toLowerCase();
+    const needle = caseSensitive ? q : q.toLowerCase();
+    const idx = haystack.indexOf(needle);
     if (idx === -1) return snippet;
     return (
       <>
@@ -90,10 +93,21 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
               'focus:outline-none focus:border-accent transition-colors',
             )}
           />
+          <button
+            onClick={() => setCaseSensitive(s => !s)}
+            className={cn(
+              "absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md transition-colors",
+              caseSensitive ? "bg-accent/20 text-accent" : "text-muted-foreground hover:bg-foreground/10"
+            )}
+            title={caseSensitive ? "Case sensitive (on)" : "Case sensitive (off)"}
+            aria-label="Toggle case sensitivity"
+          >
+            <CaseSensitive className="w-3.5 h-3.5" />
+          </button>
           {query && (
             <button
               onClick={() => setQuery('')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-foreground/10"
+              className="absolute right-9 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-foreground/10"
               aria-label="Clear"
             >
               <X className="w-3.5 h-3.5 text-muted-foreground" />
@@ -110,6 +124,7 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
         {indexReady && debounced && (
           <p className="mt-2 text-xs text-muted-foreground">
             {results.length} match{results.length === 1 ? '' : 'es'}
+            {results.length === 500 && <span className="ml-1 text-amber-500">(only showing first 500 results)</span>}
           </p>
         )}
       </div>
@@ -127,8 +142,12 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
           {results.map((r) => (
             <li key={`${r.page}-${r.resultIndex}`}>
               <button
-                onClick={() => onJumpToPage(r.page)}
-                className="w-full text-left px-4 py-3 hover:bg-muted transition-colors"
+                onClick={() => !navigationLocked && onJumpToPage(r.page)}
+                disabled={navigationLocked}
+                className={cn(
+                  "w-full text-left px-4 py-3 transition-colors",
+                  navigationLocked ? "opacity-50 cursor-not-allowed" : "hover:bg-muted",
+                )}
               >
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs font-medium text-accent">Page {r.page}</span>

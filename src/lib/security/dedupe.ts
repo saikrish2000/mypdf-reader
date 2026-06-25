@@ -19,6 +19,8 @@ export interface RawFinding {
 export interface Finding {
   id: string;
   scanner: string;
+  primaryScanner: string;
+  internalId?: string;
   sources: string[];
   severity: Severity;
   title: string;
@@ -27,6 +29,12 @@ export interface Finding {
   firstSeen: string;
   lastSeen: string;
   state: FindingState;
+}
+
+const STATE_RANK: Record<FindingState, number> = { failing: 3, ignored: 2, fixed: 1 };
+
+function mergeState(a: FindingState, b: FindingState): FindingState {
+  return STATE_RANK[a] >= STATE_RANK[b] ? a : b;
 }
 
 const SEV_RANK: Record<Severity, number> = {
@@ -79,6 +87,7 @@ export function dedupeFindings(rows: RawFinding[]): Finding[] {
     const firstSeen = r.created_at ?? new Date().toISOString();
     const lastSeen = r.updated_at ?? firstSeen;
     const state: FindingState = r.state ?? "failing";
+    const internalId = r.internal_id ?? r.id;
 
     const existing = map.get(key);
     if (existing) {
@@ -86,10 +95,14 @@ export function dedupeFindings(rows: RawFinding[]): Finding[] {
       if (firstSeen < existing.firstSeen) existing.firstSeen = firstSeen;
       if (lastSeen > existing.lastSeen) existing.lastSeen = lastSeen;
       if (description.length > existing.description.length) existing.description = description;
+      existing.state = mergeState(existing.state, state);
+      if (!existing.internalId && internalId) existing.internalId = internalId;
     } else {
       map.set(key, {
         id: key,
         scanner: r.scanner,
+        primaryScanner: r.scanner,
+        internalId,
         sources: [r.scanner],
         severity,
         title,

@@ -45,4 +45,13 @@ describe("dedupeFindings", () => {
     ]);
     expect(countBySeverity(out)).toMatchObject({ high: 1 });
   });
+
+  it("prefers failing state when merging duplicates", () => {
+    const out = dedupeFindings([
+      { scanner: "a", name: "Open RLS", resource: "public.x", level: "high", state: "fixed", internal_id: "1" },
+      { scanner: "b", name: "open rls", resource: "public.x", level: "high", state: "failing", internal_id: "2" },
+    ]);
+    expect(out).toHaveLength(1);
+    expect(out[0].state).toBe("failing");
+  });
 });
