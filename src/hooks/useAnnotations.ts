@@ -48,7 +48,7 @@ export function useDocumentId(file: File | null, pageCount: number) {
         if (selectError) throw selectError;
         if (existing) {
           setDocumentId(existing.id);
-          await supabase.from('documents')
+          await supabase!.from('documents')
             .update({ last_opened_at: new Date().toISOString(), file_name: file.name, page_count: pageCount })
             .eq('id', existing.id);
           return;
@@ -83,7 +83,7 @@ export function useAnnotations(documentId: string | null) {
     let cancelled = false;
     setLoading(true);
     let fetchFailed = false;
-    supabase
+    supabase!
       .from('annotations')
       .select('*')
       .eq('document_id', documentId)
@@ -99,8 +99,7 @@ export function useAnnotations(documentId: string | null) {
           setAnnotations((data ?? []) as unknown as Annotation[]);
         }
         setLoading(false);
-      })
-      .catch((err: unknown) => {
+      }, (err: unknown) => {
         if (cancelled) return;
         if (!fetchFailed) {
           console.error('Failed to load annotations:', err);
@@ -110,7 +109,7 @@ export function useAnnotations(documentId: string | null) {
         setLoading(false);
       });
 
-    const ch = supabase
+    const ch = supabase!
       .channel(`user:${user.id}:annot-${documentId}`, { config: { private: true } })
       .on('postgres_changes',
         { event: '*', schema: 'public', table: 'annotations', filter: `document_id=eq.${documentId}` },
@@ -137,7 +136,7 @@ export function useAnnotations(documentId: string | null) {
           console.warn('Realtime annotations subscription status:', status);
         }
       });
-    return () => { cancelled = true; supabase.removeChannel(ch); };
+    return () => { cancelled = true; supabase!.removeChannel(ch); };
   }, [documentId, user]);
 
   const create = useCallback(async (a: Omit<Annotation, 'id' | 'created_at' | 'updated_at' | 'document_id'>) => {
@@ -146,9 +145,9 @@ export function useAnnotations(documentId: string | null) {
       ...a,
       document_id: documentId,
       user_id: user.id,
-      rects: a.rects as AnnotationInsert['rects'],
+      rects: a.rects as unknown as AnnotationInsert['rects'],
     };
-    const { data, error } = await supabase
+    const { data, error } = await supabase!
       .from('annotations')
       .insert(payload)
       .select('*')
@@ -164,16 +163,16 @@ export function useAnnotations(documentId: string | null) {
     setAnnotations(prev => prev.map(a => a.id === id ? { ...a, ...patch } as Annotation : a));
     const dbPatch: AnnotationUpdate = {
       ...patch,
-      rects: patch.rects as AnnotationUpdate['rects'],
+      rects: patch.rects as unknown as AnnotationUpdate['rects'],
     };
-    const { error } = await supabase.from('annotations').update(dbPatch).eq('id', id);
+    const { error } = await supabase!.from('annotations').update(dbPatch).eq('id', id);
     if (error) setAnnotations(prevSnapshot);
   }, []);
 
   const remove = useCallback(async (id: string) => {
     const prevSnapshot = annotationsRef.current;
     setAnnotations(prev => prev.filter(a => a.id !== id));
-    const { error } = await supabase.from('annotations').delete().eq('id', id);
+    const { error } = await supabase!.from('annotations').delete().eq('id', id);
     if (error) setAnnotations(prevSnapshot);
   }, []);
 

@@ -88,12 +88,12 @@ export const usePDFStorage = () => {
       const existing = data[fileId];
 
       data[fileId] = {
+        ...existing,
         fileName,
         currentPage: existing?.currentPage ?? 1,
         totalPages: existing?.totalPages ?? 0,
         lastRead: Date.now(),
         ...(contentHash ? { contentHash } : {}),
-        ...existing,
         readingMode: mode,
       };
 
@@ -114,12 +114,12 @@ export const usePDFStorage = () => {
       const existing = data[fileId];
 
       data[fileId] = {
+        ...existing,
         fileName,
         currentPage: existing?.currentPage ?? 1,
         totalPages: existing?.totalPages ?? 0,
         lastRead: existing?.lastRead ?? Date.now(),
         ...(contentHash ? { contentHash } : {}),
-        ...existing,
         ...patch,
       };
 

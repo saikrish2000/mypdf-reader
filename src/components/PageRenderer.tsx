@@ -103,14 +103,14 @@ const PageRenderer: React.FC<PageRendererProps> = ({
           const textContent = await page.getTextContent();
           const textLayerDiv = layer;
           textLayerDiv.innerHTML = '';
-          const textItems = textContent.items.filter(
-            (item): item is PdfTextItem & { str: string } => 'str' in item && Boolean((item as PdfTextItem).str),
+          const textItems = (textContent.items as unknown as PdfTextItem[]).filter(
+            (item): item is PdfTextItem & { str: string } => 'str' in item && Boolean(item.str),
           );
           const textStyles = textContent.styles || {};
           const tx = pdfjsLib.Util.transform(viewport.transform, [1, 0, 0, -1, 0, 0]);
           for (const item of textItems) {
             const tx2 = pdfjsLib.Util.transform(tx, item.transform);
-            const style = textStyles[item.fontName] || {};
+            const style: { fontFamily?: string } = (item.fontName ? textStyles[item.fontName] : undefined) || {};
             const span = document.createElement('span');
             span.textContent = item.str;
             const fontSize = Math.sqrt(tx2[0] * tx2[0] + tx2[1] * tx2[1]);

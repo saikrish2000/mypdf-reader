@@ -70,7 +70,7 @@ export default function HeroScene({ theme, className, variant = 'card' }: HeroSc
           <SplineLoader
             scene={SPLINE_SCENE_URL}
             className="absolute inset-0 z-0 w-full h-full"
-            style={'splineFilter' in config && config.splineFilter ? { filter: config.splineFilter } : undefined}
+            style={'splineFilter' in config && (config as { splineFilter?: string }).splineFilter ? { filter: (config as { splineFilter?: string }).splineFilter } : undefined}
           />
           <div className="absolute inset-0 z-[1] pointer-events-none bg-gradient-to-t from-background/70 via-transparent to-transparent" />
           {isFull && (

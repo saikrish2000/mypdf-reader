@@ -73,7 +73,7 @@ export default function StudyPanel({
       const body = { text, pageNumber: currentPage, highlightQuotes };
 
       if (mode === 'flashcards') {
-        const { data, error } = await supabase.functions.invoke('generate-flashcards', { body });
+        const { data, error } = await supabase!.functions.invoke('generate-flashcards', { body });
         if (error) throw error;
         const result = data as GenerateFlashcardsResponse;
         if (result.error) throw new Error(result.error);
@@ -82,7 +82,7 @@ export default function StudyPanel({
         setFlipped(false);
         toast.success(`Generated ${result.cards?.length ?? 0} flashcards`);
       } else {
-        const { data, error } = await supabase.functions.invoke('generate-quiz', { body });
+        const { data, error } = await supabase!.functions.invoke('generate-quiz', { body });
         if (error) throw error;
         const result = data as GenerateQuizResponse;
         if (result.error) throw new Error(result.error);

@@ -1,7 +1,8 @@
 import { useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import { FlowButton } from "@/components/ui/flow-button";
+
 
 const containerVariants = {
   hidden: {
@@ -18,7 +19,7 @@ const containerVariants = {
       staggerChildren: 0.1,
     },
   },
-};
+} as unknown as Variants;
 
 const itemVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -30,7 +31,7 @@ const itemVariants = {
       ease: [0.43, 0.13, 0.23, 0.96],
     },
   },
-};
+} as unknown as Variants;
 
 const numberVariants = {
   hidden: (direction: number) => ({
@@ -49,7 +50,7 @@ const numberVariants = {
       ease: [0.43, 0.13, 0.23, 0.96],
     },
   },
-};
+} as unknown as Variants;
 
 const ghostVariants = {
   hidden: { scale: 0.8, opacity: 0, y: 15, rotate: -5 },
@@ -89,7 +90,7 @@ const ghostVariants = {
       },
     },
   },
-};
+} as unknown as Variants;
 
 const NotFound = () => {
   const location = useLocation();
