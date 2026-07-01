@@ -18,7 +18,7 @@ export function useSecurityFindings() {
     setLoading(true);
     setError(null);
     try {
-      const { data, error: invokeErr } = await supabase.functions.invoke("security-findings", {
+      const { data, error: invokeErr } = await supabase!.functions.invoke("security-findings", {
         method: "GET",
       });
       if (invokeErr) throw invokeErr;
@@ -39,7 +39,7 @@ export function useSecurityFindings() {
 
   const manageFinding = useCallback(
     async (scanner: string, internal_id: string, action: "mark_fixed" | "ignore", explanation: string) => {
-      const { error: invokeErr } = await supabase.functions.invoke("security-findings", {
+      const { error: invokeErr } = await supabase!.functions.invoke("security-findings", {
         method: "POST",
         body: { action, scanner, internal_id, explanation },
       });

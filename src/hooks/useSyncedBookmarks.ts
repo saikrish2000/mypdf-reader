@@ -66,7 +66,7 @@ export function useSyncedBookmarks(fileName: string, documentId: string | null, 
 
         const localOnly = localList.filter((b) => !remotePages.has(b.page));
         if (localOnly.length > 0) {
-          await supabase.from('bookmarks').upsert(
+          await supabase!.from('bookmarks').upsert(
             localOnly.map((b) => ({
               user_id: user.id,
               document_id: documentId,

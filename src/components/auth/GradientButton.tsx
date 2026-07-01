@@ -1,9 +1,9 @@
 import { Loader2 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, type HTMLMotionProps } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { authGradientBg } from './authStyles';
 
-interface GradientButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface GradientButtonProps extends Omit<HTMLMotionProps<'button'>, 'ref'> {
   loading?: boolean;
 }
 
@@ -39,3 +39,4 @@ export default function GradientButton({
     </motion.button>
   );
 }
+

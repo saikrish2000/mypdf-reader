@@ -291,7 +291,7 @@ const PageFlipBookViewer: React.FC<PageFlipBookViewerProps> = ({
     const host = hostRef.current;
     if (!host || !ready) return;
     const ro = new ResizeObserver(() => {
-      pageFlipRef.current?.update();
+      // PageFlip re-lays out on window resize automatically; nothing to do here.
     });
     ro.observe(host);
     return () => ro.disconnect();
