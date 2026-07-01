@@ -44,7 +44,7 @@ export function useSyncedBookmarks(fileName: string, documentId: string | null, 
     setSyncState('syncing');
     (async () => {
       try {
-        const { data: remote, error } = await supabase
+        const { data: remote, error } = await supabase!
           .from('bookmarks')
           .select('*')
           .eq('user_id', user.id)
@@ -103,7 +103,7 @@ export function useSyncedBookmarks(fileName: string, documentId: string | null, 
       setVersion((v) => v + 1);
       if (user && documentId) {
         setSyncState('syncing');
-        supabase
+        supabase!
           .from('bookmarks')
           .upsert(
             {
@@ -129,7 +129,7 @@ export function useSyncedBookmarks(fileName: string, documentId: string | null, 
       setVersion((v) => v + 1);
       if (user && documentId) {
         setSyncState('syncing');
-        supabase
+        supabase!
           .from('bookmarks')
           .delete()
           .eq('user_id', user.id)

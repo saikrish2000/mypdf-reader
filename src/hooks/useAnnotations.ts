@@ -83,7 +83,7 @@ export function useAnnotations(documentId: string | null) {
     let cancelled = false;
     setLoading(true);
     let fetchFailed = false;
-    supabase
+    supabase!
       .from('annotations')
       .select('*')
       .eq('document_id', documentId)
@@ -99,8 +99,7 @@ export function useAnnotations(documentId: string | null) {
           setAnnotations((data ?? []) as unknown as Annotation[]);
         }
         setLoading(false);
-      })
-      .catch((err: unknown) => {
+      }, (err: unknown) => {
         if (cancelled) return;
         if (!fetchFailed) {
           console.error('Failed to load annotations:', err);
@@ -110,7 +109,7 @@ export function useAnnotations(documentId: string | null) {
         setLoading(false);
       });
 
-    const ch = supabase
+    const ch = supabase!
       .channel(`user:${user.id}:annot-${documentId}`, { config: { private: true } })
       .on('postgres_changes',
         { event: '*', schema: 'public', table: 'annotations', filter: `document_id=eq.${documentId}` },
@@ -148,7 +147,7 @@ export function useAnnotations(documentId: string | null) {
       user_id: user.id,
       rects: a.rects as unknown as AnnotationInsert['rects'],
     };
-    const { data, error } = await supabase
+    const { data, error } = await supabase!
       .from('annotations')
       .insert(payload)
       .select('*')
