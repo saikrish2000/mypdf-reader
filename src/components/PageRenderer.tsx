@@ -110,7 +110,7 @@ const PageRenderer: React.FC<PageRendererProps> = ({
           const tx = pdfjsLib.Util.transform(viewport.transform, [1, 0, 0, -1, 0, 0]);
           for (const item of textItems) {
             const tx2 = pdfjsLib.Util.transform(tx, item.transform);
-            const style = (item.fontName ? textStyles[item.fontName] : undefined) || {};
+            const style: { fontFamily?: string } = (item.fontName ? textStyles[item.fontName] : undefined) || {};
             const span = document.createElement('span');
             span.textContent = item.str;
             const fontSize = Math.sqrt(tx2[0] * tx2[0] + tx2[1] * tx2[1]);
