@@ -1,100 +1,89 @@
-# Security Hardening: CI Gate + Consolidated Findings
 
-Three coordinated pieces of work: (1) a CI workflow that fails the build on new high-severity findings, (2) a re-run of all scans with confirmation of zero remaining issues, and (3) an in-app consolidated security view that loads & dedupes findings from every scanner (Supabase, Supabase-Lov, Wiz, Aikido, and any future connector scanners).
+# Site Audit — Fixes & Feature Plan
 
----
-
-## 1. CI security gate (GitHub Actions)
-
-New file: `.github/workflows/security-gate.yml`
-
-- Triggers: `pull_request` and `push` to `main`.
-- Steps:
-  1. Checkout.
-  2. `bun install`.
-  3. **Dependency audit** — run `bun audit --json` (or `npm audit --audit-level=high --json` as fallback) and fail if any `high` or `critical` advisories appear.
-  4. **Static secret scan** — run `gitleaks detect --no-banner --redact` (pinned action `gitleaks/gitleaks-action@v2`). Fail on any leak.
-  5. **Lovable scan results gate** — call the Lovable scan-results API (workspace-scoped, includes Wiz/Aikido when connected) using a `LOVABLE_API_KEY` repo secret. A small Node script (`scripts/security-gate.mjs`) fetches `/v1/projects/{id}/security/findings`, filters `severity in (high, critical)` and `state = failing`, prints a Markdown table to `$GITHUB_STEP_SUMMARY`, and exits non-zero if the count > 0.
-  6. Upload the JSON report as a workflow artifact for traceability.
-
-Repo secrets required (documented in plan, asked at build time):
-- `LOVABLE_API_KEY` — for the scan-results API.
-- `LOVABLE_PROJECT_ID` — already known: this project's ID.
-
-Bypass: a `security-gate-bypass` PR label skips step 5 only (audit + gitleaks still run) so urgent hotfixes aren't blocked.
+I visited the live app on desktop (1280) and mobile (390) across `/`, `/library`, `/auth`, `/security` and captured screenshots. Below is what I found and what I propose.
 
 ---
 
-## 2. Re-run all scans & confirm zero issues
+## A. Bugs & UX corrections (do first)
 
-After CI is in place:
+### A1. Landing hero has a huge empty region
+On desktop the H1 ("Read smarter. Understand faster.") sits ~700px down the page and the right column (3D robot scene) is anchored near the bottom. Result: users see a mostly-black viewport on first load.
 
-1. Call `security--run_security_scan` (Supabase scanners).
-2. Call `supabase--linter` for DB-level checks.
-3. Pull persisted findings via `security--get_scan_results` (includes `connector_security_scan` which surfaces Wiz/Aikido).
-4. Confirm every scanner returns `findings: []`. If anything new appears, fix it inline (RLS, GRANTs, policies, etc.) and rescan.
-5. Update `@security-memory` with the latest posture summary.
+**Fix:** In `HeroSection` / `HeroScene`, vertically center the two columns in a `min-h-[calc(100vh-4rem)] grid place-items-center` container; cap the 3D canvas at `h-[520px]` and align its top to the hero text row.
 
-Expected outcome: 0 failing findings across `supabase`, `supabase_lov`, and `connector_security_scan`. If Wiz is not connected at the workspace level, note that explicitly and offer a `<presentation-mcp-connect>`-style action so the user can hook it up.
+### A2. Landing sections below the hero don't render on mobile
+The mobile screenshot ends after the feature chips and the preview card; Features / Pricing / Testimonials / Footer are either not mounted on mobile or hidden behind a `md:` breakpoint.
 
----
+**Fix:** Audit `Landing.tsx` section list — remove `hidden md:block` on `FeaturesGrid`, `HowItWorks`, `Pricing`, `Testimonials`, `LandingFooter`. Add mobile-first spacing (`py-16 px-5`).
 
-## 3. In-app consolidated security view
+### A3. Auth page split-screen is unbalanced on desktop
+Left showcase ends at ~250px height while the right card is ~1100px; large dead space in the middle.
 
-New route: `/security` (auth-gated, owner only).
+**Fix:** Make the left column `sticky top-0 h-screen flex flex-col justify-center`, and stack the "Cloud Sync / Secure Storage / Lightning Fast" chips + testimonial to fill the column.
 
-### Data layer
-- New hook `src/hooks/useSecurityFindings.ts`:
-  - Calls a new edge function `security-findings` (server-side, uses `LOVABLE_API_KEY` from secrets) that aggregates:
-    - Supabase scanner output
-    - Supabase-Lov scanner output
-    - `connector_security_scan` output (Wiz, Aikido, future)
-  - Normalizes every finding to:
-    ```ts
-    type Finding = {
-      id: string;             // stable hash (see dedupe)
-      scanner: string;        // 'supabase' | 'supabase_lov' | 'wiz' | 'aikido' | ...
-      severity: 'critical'|'high'|'medium'|'low'|'info';
-      title: string;
-      description: string;
-      resource?: string;      // table, file, URL
-      firstSeen: string;
-      lastSeen: string;
-      state: 'failing'|'fixed'|'ignored';
-      sources: string[];      // scanners that reported the same issue (post-dedupe)
-    };
-    ```
+### A4. Landing 3D scene is missing on mobile
+`HeroScene` (Spline/WebGL) is gated to desktop. Mobile users see nothing where the visual should be.
 
-### Dedupe strategy
-Composite key = `sha256(normalize(title) + '|' + normalize(resource) + '|' + severity)`.
-- Lowercase, strip punctuation, collapse whitespace for `title` and `resource`.
-- When two scanners produce the same key, merge into one row and append both scanner names to `sources`.
-- Preserve the earliest `firstSeen` and the latest `lastSeen`.
-- A small `dedupeFindings(rows: RawFinding[]): Finding[]` pure function lives in `src/lib/security/dedupe.ts` with unit tests in `src/lib/security/dedupe.test.ts`.
+**Fix:** Replace with a lightweight animated preview (existing `HeroAppPreview`) for `<md` breakpoints; keep Spline for desktop only.
 
-### UI (`src/pages/Security.tsx`)
-- Header with totals per severity (Critical / High / Medium / Low) as colored chips.
-- Filter bar: scanner multi-select, severity multi-select, state toggle (failing / ignored / fixed), free-text search.
-- Sortable table (TanStack-style, but plain — no new dep) with columns: Severity • Title • Resource • Scanners • Last seen • Actions.
-- Row expand → full description, remediation hint, "Mark fixed" / "Ignore" buttons (call existing manage-finding endpoint via the same edge function).
-- Empty state styled to match the book aesthetic (warm paper, ruled lines) — "All clear. No open findings."
-- Link from the home screen header: small shield icon → `/security`, shows a red dot if any high/critical failing finding exists.
+### A5. Reader toolbar/panel responsiveness (regression check)
+The earlier mobile-responsive pass shipped, but I want to re-verify the reader on 390px width with a real PDF: toolbar overflow, panels (Search, Stats, Bookmarks, AI) opening as bottom sheets, and pinch-zoom.
 
-### Edge function `supabase/functions/security-findings/index.ts`
-- `GET` → returns deduped findings JSON.
-- `POST` with `{action: 'mark_fixed'|'ignore', id, explanation}` → proxies to the Lovable security API.
-- Uses `LOVABLE_API_KEY` from env (already a project secret).
-- CORS headers + JWT verification (owner-only via a `user_roles` check; if no roles table exists yet, gate by `auth.uid() === documents.user_id LIMIT 1` owner heuristic — confirmed during build).
+**Fix:** Convert side panels to `<Sheet side="bottom">` on `<md`; collapse `PDFToolbar` extras into an overflow menu.
+
+### A6. Console warnings
+- `React Router Future Flag Warning: v7_startTransition` — enable the flag in `BrowserRouter.future`.
+- `updating from 115 to 122` — noisy log from PDF.js version bump, silence in `useFullTextSearch`.
+
+### A7. `/security` UX
+Currently redirects unauth users straight to `/auth`. Show a friendlier "Sign in to view security dashboard" gate (already partially in `RequireAuth` — verify copy).
 
 ---
 
-## Order of execution
-1. Build the edge function + dedupe lib + tests.
-2. Build the `/security` page + hook + home-screen shield link.
-3. Add the GitHub Actions workflow + `scripts/security-gate.mjs`.
-4. Re-run scans, fix anything new, confirm zero findings, update security memory.
+## B. Feature additions (grouped, pick which to build)
 
-## Open questions before I start
-- Confirm you have a **GitHub repo connected** for this project (CI only makes sense if so).
-- Confirm **Wiz is connected at the workspace level** (otherwise its findings will simply be absent — not an error, but worth surfacing in the UI as "Wiz not connected").
-- Should the `/security` page be **owner-only** (you) or visible to **any authenticated user**? Default in the plan: owner-only.
+### B1. Reading experience
+1. Continuous scroll mode toggle (page-flip ↔ vertical scroll).
+2. Two-page spread on desktop (facing pages, center gutter shadow).
+3. Focus/immersive mode — hide chrome, edge-tap to flip.
+4. Per-document settings memory (zoom, theme, scroll mode, last page).
+
+### B2. Study & AI
+5. Flashcard SRS scheduling (Leitner boxes) on top of the existing study deck.
+6. "Explain this page" one-click summary pinned in the AI panel.
+7. Auto-generated chapter outline from PDF text (feeds OutlinePanel).
+8. Selection → "Ask AI about this" quick action in the selection toolbar.
+
+### B3. Library & organization
+9. Folders / collections with drag-to-reorder.
+10. Reading goals ("finish by X" + progress ring on cover).
+11. Tags + saved searches.
+12. Import from URL / Google Drive.
+
+### B4. Sync & offline
+13. PWA install + offline reading of last N documents.
+14. Cross-device "resume where you left off" toast.
+
+### B5. Accessibility & polish
+15. Keyboard shortcut overlay (`?`).
+16. Dyslexia-friendly font + line-height slider.
+17. High-contrast theme.
+18. Screen-reader labels audit.
+
+---
+
+## Suggested execution order
+
+1. **Ship A1–A4 + A6** in one pass — pure presentational fixes, no business logic. Biggest visible impact.
+2. **A5** reader mobile re-verification (measured with Playwright on a real PDF).
+3. **A7** security-page gate copy.
+4. Then pick a feature bundle from B — recommended first bundle: **B1.1 + B1.4 + B2.6 + B5.1** (fast wins, high perceived value).
+
+---
+
+## Open questions
+
+1. Do you want me to start with **just the A fixes** (safe, presentational), or bundle a feature group from B in the same build?
+2. For mobile hero (A4) — keep Spline off entirely on mobile, or load it lazily after first paint?
+3. Any features in B you want to drop or add before I plan them in detail?
