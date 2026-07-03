@@ -83,8 +83,9 @@ const ThumbnailSidebar: React.FC<ThumbnailSidebarProps> = ({
         className={cn(
           "fixed left-0 z-40 flex flex-col",
           "bg-card border-r border-border shadow-lg",
-          "transition-all duration-300 ease-out",
-          isOpen ? "w-64 sm:w-52 translate-x-0" : "w-0 -translate-x-full overflow-hidden pointer-events-none"
+          "transition-transform duration-300 ease-out",
+          "w-[80vw] max-w-[16rem] sm:w-52",
+          isOpen ? "translate-x-0" : "-translate-x-full pointer-events-none"
         )}
         style={{ top: 'var(--toolbar-height, 60px)', bottom: 0 }}
         aria-hidden={!isOpen}

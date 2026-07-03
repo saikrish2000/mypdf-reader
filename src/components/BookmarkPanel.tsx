@@ -53,11 +53,14 @@ const BookmarkPanel: React.FC<BookmarkPanelProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className={cn(
-      "fixed right-0 top-0 bottom-0 z-20 flex flex-col",
-      "w-full sm:w-[280px] max-h-screen animate-fade-in",
-      "bookmark-panel"
-    )}>
+    <div
+      className={cn(
+        "fixed right-0 bottom-0 z-40 flex flex-col",
+        "w-full sm:w-[280px] animate-fade-in",
+        "bookmark-panel"
+      )}
+      style={{ top: 'var(--toolbar-height, 60px)' }}
+    >
       {/* Leather-textured header */}
       <div className="bookmark-panel-header px-5 py-4">
         <div className="flex items-center justify-between">

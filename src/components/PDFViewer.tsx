@@ -873,9 +873,9 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
         />
       )}
 
-      {/* Floating zoom controls on mobile/tablet (scroll mode only) */}
+      {/* Floating zoom controls on phones only (tablet+ have toolbar zoom) */}
       {pdfDoc && readingMode === 'scroll' && (
-        <div className={cn("fixed right-4 z-30 flex flex-col gap-2 lg:hidden", isSpeaking ? "bottom-24" : "bottom-4")}>
+        <div className={cn("fixed right-4 z-30 flex flex-col gap-2 md:hidden", isSpeaking ? "bottom-24" : "bottom-4")}>
           <button
             onClick={() => setScale(s => Math.min(3, s + 0.25))}
             disabled={scale >= 3}
