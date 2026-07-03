@@ -96,10 +96,30 @@ const PDFToolbar: React.FC<PDFToolbarProps> = ({
   onNextPage,
 }) => {
   const [pageInputValue, setPageInputValue] = useState(String(currentPage));
+  const toolbarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setPageInputValue(String(currentPage));
   }, [currentPage]);
+
+  // Keep --toolbar-height in sync with the actual rendered toolbar so
+  // fixed side panels (thumbnails/bookmarks) never overlap or underlap it.
+  useEffect(() => {
+    const el = toolbarRef.current;
+    if (!el) return;
+    const setVar = () => {
+      const h = el.getBoundingClientRect().height;
+      if (h > 0) document.documentElement.style.setProperty('--toolbar-height', `${Math.ceil(h)}px`);
+    };
+    setVar();
+    const ro = new ResizeObserver(setVar);
+    ro.observe(el);
+    window.addEventListener('resize', setVar);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', setVar);
+    };
+  }, []);
 
   const handlePageInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPageInputValue(e.target.value);
