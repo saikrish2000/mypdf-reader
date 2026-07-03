@@ -149,7 +149,7 @@ const PDFToolbar: React.FC<PDFToolbarProps> = ({
   const progress = totalPages > 0 ? (currentPage / totalPages) * 100 : 0;
 
   return (
-    <div className="pdf-toolbar sticky top-0 z-50">
+    <div className="pdf-toolbar sticky top-0 z-50" ref={toolbarRef}>
       {/* Progress bar */}
       <div className="h-1 bg-toolbar-muted/30">
         <div
