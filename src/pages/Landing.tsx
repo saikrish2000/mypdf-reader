@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Navbar from '@/components/Navbar';
 import HeroSection from '@/components/hero/HeroSection';
 import UploadWorkspace from '@/components/landing/sections/UploadWorkspace';
@@ -11,10 +11,14 @@ import Testimonials from '@/components/landing/sections/Testimonials';
 import LandingFooter from '@/components/landing/sections/LandingFooter';
 import { useTheme } from '@/hooks/useTheme';
 import { useOpenDocument } from '@/hooks/useOpenDocument';
+import StorybookIntro, { useShouldPlayIntro } from '@/components/intro/StorybookIntro';
 
 const Landing = () => {
   const { theme } = useTheme();
   const { openFile, isLoading } = useOpenDocument();
+  const { ready, shouldPlay, markSeen } = useShouldPlayIntro();
+  const [introDone, setIntroDone] = useState(false);
+
 
   useEffect(() => {
     document.documentElement.classList.add('landing-scroll-snap');
@@ -25,8 +29,19 @@ const Landing = () => {
     document.getElementById('landing-upload-trigger')?.click();
   };
 
+  const playIntro = ready && shouldPlay && !introDone;
+
   return (
     <div className="min-h-screen bg-background relative landing-page">
+      {playIntro && (
+        <StorybookIntro
+          onFinish={() => {
+            markSeen();
+            setIntroDone(true);
+          }}
+        />
+      )}
+
       <Navbar variant="marketing" onUploadClick={triggerUpload} />
 
       <main className="overflow-x-clip">
