@@ -198,30 +198,32 @@ const PDFToolbar: React.FC<PDFToolbarProps> = ({
 
         {/* Center: navigation controls */}
         <div className="flex items-center gap-1 sm:gap-3 shrink-0">
-          {/* Zoom controls */}
-          <div className="hidden lg:flex items-center gap-1 mr-2">
+          {/* Zoom controls — visible from tablet up */}
+          <div className="hidden md:flex items-center gap-1 mr-1 lg:mr-2">
             <button
               onClick={() => onScaleChange(Math.max(0.5, scale - 0.25))}
               disabled={scale <= 0.5}
               className={cn(
-                "flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg transition-colors",
+                "flex items-center justify-center min-w-[40px] min-h-[40px] lg:min-w-[44px] lg:min-h-[44px] rounded-lg transition-colors",
                 "hover:bg-toolbar-foreground/10 disabled:opacity-40 disabled:cursor-not-allowed"
               )}
               title="Zoom out"
+              aria-label="Zoom out"
             >
               <ZoomOut className="w-4 h-4 text-toolbar-foreground" />
             </button>
-            <span className="text-xs text-toolbar-muted w-12 text-center">
+            <span className="text-xs text-toolbar-muted w-10 lg:w-12 text-center tabular-nums">
               {Math.round(scale * 100)}%
             </span>
             <button
               onClick={() => onScaleChange(Math.min(3, scale + 0.25))}
               disabled={scale >= 3}
               className={cn(
-                "flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg transition-colors",
+                "flex items-center justify-center min-w-[40px] min-h-[40px] lg:min-w-[44px] lg:min-h-[44px] rounded-lg transition-colors",
                 "hover:bg-toolbar-foreground/10 disabled:opacity-40 disabled:cursor-not-allowed"
               )}
               title="Zoom in"
+              aria-label="Zoom in"
             >
               <ZoomIn className="w-4 h-4 text-toolbar-foreground" />
             </button>
