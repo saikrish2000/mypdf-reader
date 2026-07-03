@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, PanelLeft, X, Bookmark, Sparkles, MessageCircle, Search, BookOpen, ScrollText, Home, ListTree } from 'lucide-react';
 import type { ReadingMode } from '@/hooks/usePDFStorage';
 import ThemeToggle from './ThemeToggle';
