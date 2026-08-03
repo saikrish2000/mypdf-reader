@@ -27,17 +27,19 @@ type StoryPage = {
   icon: typeof UploadCloud;
   title: string;
   caption: string;
-  tint: string; // background tint gradient
+  /** Opaque page background (solid — pages must never be see-through). */
+  tint: string;
 };
 
 const PAGES: StoryPage[] = [
-  { icon: UploadCloud, title: 'Drop in a PDF',       caption: 'Textbooks, papers, novels — rendered like real paper.', tint: 'from-amber-50 to-stone-100' },
-  { icon: Sparkles,    title: 'AI that reads with you', caption: 'Summaries and answers, grounded in the current page.', tint: 'from-rose-50 to-amber-50' },
-  { icon: Highlighter, title: 'Highlight & note',    caption: 'Your marks and sticky notes, saved to your library.',  tint: 'from-sky-50 to-stone-100' },
-  { icon: Gauge,       title: 'Track your progress', caption: 'Pages read, time spent, and streaks for every book.',  tint: 'from-emerald-50 to-stone-100' },
-  { icon: BookMarked,  title: 'Auto-resume',         caption: 'Reopen a document and land exactly where you stopped.', tint: 'from-stone-50 to-amber-50' },
-  { icon: Headphones,  title: 'Listen along',        caption: 'Natural read-aloud for any chapter, anywhere.',        tint: 'from-violet-50 to-stone-100' },
+  { icon: UploadCloud, title: 'Drop in a PDF',       caption: 'Textbooks, papers, novels — rendered like real paper.', tint: 'linear-gradient(160deg, #fdf6e6 0%, #f3ead6 100%)' },
+  { icon: Sparkles,    title: 'AI that reads with you', caption: 'Summaries and answers, grounded in the current page.', tint: 'linear-gradient(160deg, #fdf1ee 0%, #f7ecd9 100%)' },
+  { icon: Highlighter, title: 'Highlight & note',    caption: 'Your marks and sticky notes, saved to your library.',  tint: 'linear-gradient(160deg, #eef5fb 0%, #f1ece1 100%)' },
+  { icon: Gauge,       title: 'Track your progress', caption: 'Pages read, time spent, and streaks for every book.',  tint: 'linear-gradient(160deg, #ecf7f0 0%, #f2ede2 100%)' },
+  { icon: BookMarked,  title: 'Auto-resume',         caption: 'Reopen a document and land exactly where you stopped.', tint: 'linear-gradient(160deg, #f7f4ec 0%, #f6ecd8 100%)' },
+  { icon: Headphones,  title: 'Listen along',        caption: 'Natural read-aloud for any chapter, anywhere.',        tint: 'linear-gradient(160deg, #f2effb 0%, #f2ede2 100%)' },
 ];
+
 
 
 interface StorybookIntroProps {
