@@ -3,7 +3,7 @@ import { heroContent } from '@/lib/landing/content';
 
 export const HERO_THEME_CONFIG = {
   light: {
-    showSpline: false,
+    showSpline: true,
     showAppPreview: true,
     headline: heroContent.headline,
     headlineAccent: heroContent.headlineAccent,
@@ -21,7 +21,7 @@ export const HERO_THEME_CONFIG = {
     useBlur: true,
   },
   contrast: {
-    showSpline: false,
+    showSpline: true,
     showAppPreview: true,
     headline: 'Maximum clarity for focused study',
     headlineAccent: '',
