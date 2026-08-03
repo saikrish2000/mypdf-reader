@@ -35,8 +35,9 @@ interface HeroLivePreviewProps {
 export default function HeroLivePreview({ theme, className }: HeroLivePreviewProps) {
   const config = getHeroConfig(theme);
   const prefersReducedMotion = usePrefersReducedMotion();
-  const minLg = useMinLg();
-  const showSpline = config.showSpline && !prefersReducedMotion && minLg;
+  const isMobile = useIsMobile();
+  const showSpline = config.showSpline && !prefersReducedMotion && !isMobile;
+
 
   return (
     <div
