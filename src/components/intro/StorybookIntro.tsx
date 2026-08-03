@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { BookOpen, Sparkles, Brain, Highlighter, Headphones, Focus, X } from 'lucide-react';
+import { UploadCloud, Sparkles, Gauge, BookMarked, Highlighter, Headphones, X } from 'lucide-react';
 
 /**
  * StorybookIntro
@@ -9,23 +10,35 @@ import { BookOpen, Sparkles, Brain, Highlighter, Headphones, Focus, X } from 'lu
  * (localStorage). Skippable. Respects prefers-reduced-motion.
  */
 
-const STORAGE_KEY = 'mypdf.intro.seen.v1';
+/**
+ * Bump INTRO_VERSION whenever the intro is intentionally redesigned —
+ * the storage key changes, so every visitor sees the new animation once.
+ */
+const INTRO_VERSION = 2;
+const STORAGE_KEY = `mypdf.intro.seen.v${INTRO_VERSION}`;
+
+/** Route the intro is allowed to play on. */
+const INTRO_ROUTE = '/';
+
+/** Module-level flag: intro is a first-paint moment, never a navigation event. */
+let introPlayedThisSession = false;
 
 type StoryPage = {
-  icon: typeof BookOpen;
+  icon: typeof UploadCloud;
   title: string;
   caption: string;
   tint: string; // background tint gradient
 };
 
 const PAGES: StoryPage[] = [
-  { icon: BookOpen,    title: 'Open any PDF',      caption: 'Textbooks, papers, novels — beautifully rendered.', tint: 'from-amber-50 to-stone-100' },
-  { icon: Sparkles,    title: 'AI that reads with you', caption: 'Summaries and answers, grounded in the page.',   tint: 'from-rose-50 to-amber-50' },
-  { icon: Brain,       title: 'Study smarter',      caption: 'Flashcards and quizzes generated as you read.',     tint: 'from-emerald-50 to-stone-100' },
-  { icon: Highlighter, title: 'Highlight & note',   caption: 'Your marks and thoughts saved right in the margin.', tint: 'from-sky-50 to-stone-100' },
-  { icon: Headphones,  title: 'Listen along',       caption: 'Natural read-aloud for any chapter, anywhere.',      tint: 'from-violet-50 to-stone-100' },
-  { icon: Focus,       title: 'Deep focus',         caption: 'A distraction-free reading room, made for thinking.', tint: 'from-stone-50 to-amber-50' },
+  { icon: UploadCloud, title: 'Drop in a PDF',       caption: 'Textbooks, papers, novels — rendered like real paper.', tint: 'from-amber-50 to-stone-100' },
+  { icon: Sparkles,    title: 'AI that reads with you', caption: 'Summaries and answers, grounded in the current page.', tint: 'from-rose-50 to-amber-50' },
+  { icon: Highlighter, title: 'Highlight & note',    caption: 'Your marks and sticky notes, saved to your library.',  tint: 'from-sky-50 to-stone-100' },
+  { icon: Gauge,       title: 'Track your progress', caption: 'Pages read, time spent, and streaks for every book.',  tint: 'from-emerald-50 to-stone-100' },
+  { icon: BookMarked,  title: 'Auto-resume',         caption: 'Reopen a document and land exactly where you stopped.', tint: 'from-stone-50 to-amber-50' },
+  { icon: Headphones,  title: 'Listen along',        caption: 'Natural read-aloud for any chapter, anywhere.',        tint: 'from-violet-50 to-stone-100' },
 ];
+
 
 interface StorybookIntroProps {
   onFinish: () => void;
@@ -505,18 +518,37 @@ function FinalPage({ morphing }: { morphing: boolean }) {
 /* ---------------- Hook ---------------- */
 
 export function useShouldPlayIntro() {
+  const { pathname } = useLocation();
   const [ready, setReady] = useState(false);
   const [shouldPlay, setShouldPlay] = useState(false);
 
   useEffect(() => {
-    try {
-      const seen = localStorage.getItem(STORAGE_KEY);
-      setShouldPlay(!seen);
-    } catch {
-      setShouldPlay(true);
+    // Only ever evaluate on the landing route, and only on the first mount of
+    // this session — returning to "/" via internal navigation must not replay.
+    if (pathname !== INTRO_ROUTE || introPlayedThisSession) {
+      setShouldPlay(false);
+      setReady(true);
+      return;
     }
+    introPlayedThisSession = true;
+
+    let seen: string | null = null;
+    try {
+      // Clear stale keys from previous intro versions.
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key?.startsWith('mypdf.intro.seen.v') && key !== STORAGE_KEY) {
+          localStorage.removeItem(key);
+          i--;
+        }
+      }
+      seen = localStorage.getItem(STORAGE_KEY);
+    } catch {
+      /* storage unavailable — play once */
+    }
+    setShouldPlay(!seen);
     setReady(true);
-  }, []);
+  }, [pathname]);
 
   const markSeen = () => {
     try {
@@ -527,4 +559,5 @@ export function useShouldPlayIntro() {
   };
 
   return { ready, shouldPlay, markSeen };
+
 }
