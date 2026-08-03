@@ -186,16 +186,17 @@ export default function StorybookIntro({ onFinish }: StorybookIntroProps) {
 
           {/* Stage with 3D perspective */}
           <div
-            className="absolute inset-0 flex items-center justify-center"
+            className="absolute inset-0 grid place-items-center px-4 py-6"
             style={{ perspective: '2200px' }}
           >
             <motion.div
-              className="relative"
+              className="relative mx-auto"
               style={{ transformStyle: 'preserve-3d' }}
               initial={{ opacity: 0, scale: 0.55, rotateX: 18, y: 30 }}
               animate={{
                 opacity: phase === 'atmos' ? 0 : 1,
-                scale: morphing ? 1.25 : zoomed ? 1 : 0.7,
+                scale: morphing ? 1.08 : zoomed ? 1 : 0.7,
+
                 rotateX: bookOpen ? 6 : 14,
                 y: morphing ? -20 : 0,
               }}
