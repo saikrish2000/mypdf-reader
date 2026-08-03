@@ -4,7 +4,8 @@ import type { Theme } from '@/hooks/useTheme';
 import { getHeroConfig } from './heroThemeConfig';
 import SplineLoader from './SplineLoader';
 import DemoWorkspace from '@/components/landing/sections/DemoWorkspace';
-import { useMinLg } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/use-mobile';
+
 
 export const ROBOT_SCENE_URL = 'https://prod.spline.design/PyzDhpQ9E5f1E3MT/scene.splinecode';
 
@@ -34,8 +35,9 @@ interface HeroLivePreviewProps {
 export default function HeroLivePreview({ theme, className }: HeroLivePreviewProps) {
   const config = getHeroConfig(theme);
   const prefersReducedMotion = usePrefersReducedMotion();
-  const minLg = useMinLg();
-  const showSpline = config.showSpline && !prefersReducedMotion && minLg;
+  const isMobile = useIsMobile();
+  const showSpline = config.showSpline && !prefersReducedMotion && !isMobile;
+
 
   return (
     <div
@@ -44,14 +46,16 @@ export default function HeroLivePreview({ theme, className }: HeroLivePreviewPro
         className,
       )}
     >
-      {showSpline ? (
+      {/* Always-present backdrop so the panel never renders empty while the 3D scene loads or fails */}
+      <div className="absolute inset-0 z-0 bg-gradient-to-br from-accent/15 via-muted/40 to-background" />
+
+      {showSpline && (
         <>
           <SplineLoader scene={ROBOT_SCENE_URL} className="absolute inset-0 z-0 h-full w-full" />
           <div className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-background/95 via-background/30 to-transparent" />
         </>
-      ) : (
-        <div className="absolute inset-0 z-0 bg-gradient-to-br from-accent/15 via-muted/40 to-background" />
       )}
+
 
       <div className="absolute inset-x-0 bottom-0 z-10 flex flex-col items-center p-3 sm:p-4">
         <div

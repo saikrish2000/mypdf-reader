@@ -14,7 +14,7 @@ import { UploadCloud, Sparkles, Gauge, BookMarked, Highlighter, Headphones, X } 
  * Bump INTRO_VERSION whenever the intro is intentionally redesigned —
  * the storage key changes, so every visitor sees the new animation once.
  */
-const INTRO_VERSION = 2;
+const INTRO_VERSION = 3;
 const STORAGE_KEY = `mypdf.intro.seen.v${INTRO_VERSION}`;
 
 /** Route the intro is allowed to play on. */
@@ -27,17 +27,19 @@ type StoryPage = {
   icon: typeof UploadCloud;
   title: string;
   caption: string;
-  tint: string; // background tint gradient
+  /** Opaque page background (solid — pages must never be see-through). */
+  tint: string;
 };
 
 const PAGES: StoryPage[] = [
-  { icon: UploadCloud, title: 'Drop in a PDF',       caption: 'Textbooks, papers, novels — rendered like real paper.', tint: 'from-amber-50 to-stone-100' },
-  { icon: Sparkles,    title: 'AI that reads with you', caption: 'Summaries and answers, grounded in the current page.', tint: 'from-rose-50 to-amber-50' },
-  { icon: Highlighter, title: 'Highlight & note',    caption: 'Your marks and sticky notes, saved to your library.',  tint: 'from-sky-50 to-stone-100' },
-  { icon: Gauge,       title: 'Track your progress', caption: 'Pages read, time spent, and streaks for every book.',  tint: 'from-emerald-50 to-stone-100' },
-  { icon: BookMarked,  title: 'Auto-resume',         caption: 'Reopen a document and land exactly where you stopped.', tint: 'from-stone-50 to-amber-50' },
-  { icon: Headphones,  title: 'Listen along',        caption: 'Natural read-aloud for any chapter, anywhere.',        tint: 'from-violet-50 to-stone-100' },
+  { icon: UploadCloud, title: 'Drop in a PDF',       caption: 'Textbooks, papers, novels — rendered like real paper.', tint: 'linear-gradient(160deg, #fdf6e6 0%, #f3ead6 100%)' },
+  { icon: Sparkles,    title: 'AI that reads with you', caption: 'Summaries and answers, grounded in the current page.', tint: 'linear-gradient(160deg, #fdf1ee 0%, #f7ecd9 100%)' },
+  { icon: Highlighter, title: 'Highlight & note',    caption: 'Your marks and sticky notes, saved to your library.',  tint: 'linear-gradient(160deg, #eef5fb 0%, #f1ece1 100%)' },
+  { icon: Gauge,       title: 'Track your progress', caption: 'Pages read, time spent, and streaks for every book.',  tint: 'linear-gradient(160deg, #ecf7f0 0%, #f2ede2 100%)' },
+  { icon: BookMarked,  title: 'Auto-resume',         caption: 'Reopen a document and land exactly where you stopped.', tint: 'linear-gradient(160deg, #f7f4ec 0%, #f6ecd8 100%)' },
+  { icon: Headphones,  title: 'Listen along',        caption: 'Natural read-aloud for any chapter, anywhere.',        tint: 'linear-gradient(160deg, #f2effb 0%, #f2ede2 100%)' },
 ];
+
 
 
 interface StorybookIntroProps {
@@ -184,16 +186,17 @@ export default function StorybookIntro({ onFinish }: StorybookIntroProps) {
 
           {/* Stage with 3D perspective */}
           <div
-            className="absolute inset-0 flex items-center justify-center"
+            className="absolute inset-0 grid place-items-center px-4 py-6"
             style={{ perspective: '2200px' }}
           >
             <motion.div
-              className="relative"
+              className="relative mx-auto"
               style={{ transformStyle: 'preserve-3d' }}
               initial={{ opacity: 0, scale: 0.55, rotateX: 18, y: 30 }}
               animate={{
                 opacity: phase === 'atmos' ? 0 : 1,
-                scale: morphing ? 1.25 : zoomed ? 1 : 0.7,
+                scale: morphing ? 1.08 : zoomed ? 1 : 0.7,
+
                 rotateX: bookOpen ? 6 : 14,
                 y: morphing ? -20 : 0,
               }}
@@ -233,9 +236,10 @@ export default function StorybookIntro({ onFinish }: StorybookIntroProps) {
 /* ---------------- Book ---------------- */
 
 function Book({ open, flipped, morphing }: { open: boolean; flipped: number; morphing: boolean }) {
-  // Book sizes responsive to viewport
-  const width = 'min(78vmin, 720px)';
-  const height = 'min(56vmin, 520px)';
+  // Book sizes responsive to viewport (never wider/taller than the stage)
+  const width = 'min(78vmin, 86vw, 720px)';
+  const height = 'min(56vmin, 60vh, 520px)';
+
 
   return (
     <div
@@ -307,17 +311,18 @@ function Book({ open, flipped, morphing }: { open: boolean; flipped: number; mor
           >
             {/* Front face */}
             <div
-              className={`absolute inset-0 overflow-hidden rounded-r-md bg-gradient-to-br ${page.tint}`}
+              className="absolute inset-0 overflow-hidden rounded-r-md"
               style={{
                 backfaceVisibility: 'hidden',
+                backgroundColor: '#f6efdf',
+                backgroundImage: `radial-gradient(1200px 400px at -10% 0%, rgba(0,0,0,0.04), transparent 40%), radial-gradient(circle at 90% 100%, rgba(0,0,0,0.06), transparent 40%), ${page.tint}`,
                 boxShadow:
                   'inset -12px 0 24px -12px rgba(0,0,0,0.15), inset 2px 0 0 rgba(0,0,0,0.05)',
-                backgroundImage:
-                  'radial-gradient(1200px 400px at -10% 0%, rgba(0,0,0,0.04), transparent 40%), radial-gradient(circle at 90% 100%, rgba(0,0,0,0.06), transparent 40%)',
               }}
             >
               <PageContent page={page} index={i} />
             </div>
+
             {/* Back face (paper) */}
             <div
               className="absolute inset-0 rounded-l-md"
@@ -442,7 +447,7 @@ function CornerOrnament({ pos }: { pos: 'tl' | 'tr' | 'bl' | 'br' }) {
 function PageContent({ page, index }: { page: StoryPage; index: number }) {
   const Icon = page.icon;
   return (
-    <div className="relative flex h-full w-full flex-col items-center justify-center gap-4 px-8 text-center">
+    <div className="relative flex h-full w-full flex-col items-center justify-center gap-3 px-8 pb-12 pt-8 text-center sm:gap-4">
       {/* subtle paper grain */}
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.05]"
@@ -479,7 +484,7 @@ function PageContent({ page, index }: { page: StoryPage; index: number }) {
 
 function FinalPage({ morphing }: { morphing: boolean }) {
   return (
-    <div className="relative flex h-full w-full flex-col items-center justify-center px-8 text-center">
+    <div className="relative flex h-full w-full flex-col items-center justify-center px-8 py-8 text-center">
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
