@@ -484,7 +484,7 @@ function PageContent({ page, index }: { page: StoryPage; index: number }) {
 
 function FinalPage({ morphing }: { morphing: boolean }) {
   return (
-    <div className="relative flex h-full w-full flex-col items-center justify-center px-8 text-center">
+    <div className="relative flex h-full w-full flex-col items-center justify-center px-8 py-8 text-center">
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
