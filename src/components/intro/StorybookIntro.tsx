@@ -309,17 +309,18 @@ function Book({ open, flipped, morphing }: { open: boolean; flipped: number; mor
           >
             {/* Front face */}
             <div
-              className={`absolute inset-0 overflow-hidden rounded-r-md bg-gradient-to-br ${page.tint}`}
+              className="absolute inset-0 overflow-hidden rounded-r-md"
               style={{
                 backfaceVisibility: 'hidden',
+                backgroundColor: '#f6efdf',
+                backgroundImage: `radial-gradient(1200px 400px at -10% 0%, rgba(0,0,0,0.04), transparent 40%), radial-gradient(circle at 90% 100%, rgba(0,0,0,0.06), transparent 40%), ${page.tint}`,
                 boxShadow:
                   'inset -12px 0 24px -12px rgba(0,0,0,0.15), inset 2px 0 0 rgba(0,0,0,0.05)',
-                backgroundImage:
-                  'radial-gradient(1200px 400px at -10% 0%, rgba(0,0,0,0.04), transparent 40%), radial-gradient(circle at 90% 100%, rgba(0,0,0,0.06), transparent 40%)',
               }}
             >
               <PageContent page={page} index={i} />
             </div>
+
             {/* Back face (paper) */}
             <div
               className="absolute inset-0 rounded-l-md"
