@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { BookOpen, Sparkles, Brain, Highlighter, Headphones, Focus, X } from 'lucide-react';
+import { UploadCloud, Sparkles, Gauge, BookMarked, Highlighter, Headphones, X } from 'lucide-react';
 
 /**
  * StorybookIntro
