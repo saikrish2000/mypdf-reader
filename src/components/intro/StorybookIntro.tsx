@@ -235,9 +235,10 @@ export default function StorybookIntro({ onFinish }: StorybookIntroProps) {
 /* ---------------- Book ---------------- */
 
 function Book({ open, flipped, morphing }: { open: boolean; flipped: number; morphing: boolean }) {
-  // Book sizes responsive to viewport
-  const width = 'min(78vmin, 720px)';
-  const height = 'min(56vmin, 520px)';
+  // Book sizes responsive to viewport (never wider/taller than the stage)
+  const width = 'min(78vmin, 86vw, 720px)';
+  const height = 'min(56vmin, 60vh, 520px)';
+
 
   return (
     <div
