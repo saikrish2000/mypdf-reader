@@ -518,18 +518,37 @@ function FinalPage({ morphing }: { morphing: boolean }) {
 /* ---------------- Hook ---------------- */
 
 export function useShouldPlayIntro() {
+  const { pathname } = useLocation();
   const [ready, setReady] = useState(false);
   const [shouldPlay, setShouldPlay] = useState(false);
 
   useEffect(() => {
-    try {
-      const seen = localStorage.getItem(STORAGE_KEY);
-      setShouldPlay(!seen);
-    } catch {
-      setShouldPlay(true);
+    // Only ever evaluate on the landing route, and only on the first mount of
+    // this session — returning to "/" via internal navigation must not replay.
+    if (pathname !== INTRO_ROUTE || introPlayedThisSession) {
+      setShouldPlay(false);
+      setReady(true);
+      return;
     }
+    introPlayedThisSession = true;
+
+    let seen: string | null = null;
+    try {
+      // Clear stale keys from previous intro versions.
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key?.startsWith('mypdf.intro.seen.v') && key !== STORAGE_KEY) {
+          localStorage.removeItem(key);
+          i--;
+        }
+      }
+      seen = localStorage.getItem(STORAGE_KEY);
+    } catch {
+      /* storage unavailable — play once */
+    }
+    setShouldPlay(!seen);
     setReady(true);
-  }, []);
+  }, [pathname]);
 
   const markSeen = () => {
     try {
@@ -540,4 +559,5 @@ export function useShouldPlayIntro() {
   };
 
   return { ready, shouldPlay, markSeen };
+
 }
