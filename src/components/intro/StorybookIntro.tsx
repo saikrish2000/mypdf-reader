@@ -447,7 +447,7 @@ function CornerOrnament({ pos }: { pos: 'tl' | 'tr' | 'bl' | 'br' }) {
 function PageContent({ page, index }: { page: StoryPage; index: number }) {
   const Icon = page.icon;
   return (
-    <div className="relative flex h-full w-full flex-col items-center justify-center gap-4 px-8 text-center">
+    <div className="relative flex h-full w-full flex-col items-center justify-center gap-3 px-8 pb-12 pt-8 text-center sm:gap-4">
       {/* subtle paper grain */}
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.05]"
