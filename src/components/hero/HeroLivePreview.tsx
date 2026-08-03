@@ -4,7 +4,8 @@ import type { Theme } from '@/hooks/useTheme';
 import { getHeroConfig } from './heroThemeConfig';
 import SplineLoader from './SplineLoader';
 import DemoWorkspace from '@/components/landing/sections/DemoWorkspace';
-import { useMinLg } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/use-mobile';
+
 
 export const ROBOT_SCENE_URL = 'https://prod.spline.design/PyzDhpQ9E5f1E3MT/scene.splinecode';
 
