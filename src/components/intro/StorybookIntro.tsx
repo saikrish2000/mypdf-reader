@@ -14,7 +14,7 @@ import { UploadCloud, Sparkles, Gauge, BookMarked, Highlighter, Headphones, X } 
  * Bump INTRO_VERSION whenever the intro is intentionally redesigned —
  * the storage key changes, so every visitor sees the new animation once.
  */
-const INTRO_VERSION = 2;
+const INTRO_VERSION = 3;
 const STORAGE_KEY = `mypdf.intro.seen.v${INTRO_VERSION}`;
 
 /** Route the intro is allowed to play on. */
